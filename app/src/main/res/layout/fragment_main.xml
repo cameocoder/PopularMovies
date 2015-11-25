@@ -9,18 +9,14 @@
     tools:context="com.cameocoder.popularmovies.MainActivityFragment"
     tools:showIn="@layout/activity_main">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!" />
-
     <android.support.v7.widget.RecyclerView
         android:id="@+id/movies_grid"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scrollbars="vertical"
-        android:scrollbarStyle="outsideOverlay"
         android:clipToPadding="false"
-        android:elevation="1dp" />
+        android:elevation="1dp"
+        android:scrollbarStyle="outsideOverlay"
+        android:scrollbars="vertical"
+        tools:listitem="@layout/movie_item" />
 
 </RelativeLayout>
