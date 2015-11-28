@@ -15,13 +15,24 @@ public class MainActivityFragment extends Fragment {
 
     private static final String OpenMovieAipKey = BuildConfig.OPEN_MOVIE_DB_API_KEY;
 
+    private boolean mTwoPane;
+
     public MainActivityFragment() {
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_main, container, false);
+        View view = inflater.inflate(R.layout.fragment_main, container, false);
+        if (view.findViewById(R.id.movieitem_detail_container) != null) {
+            mTwoPane = true;
+        }
+        return view;
     }
 
     @Override
@@ -30,7 +41,7 @@ public class MainActivityFragment extends Fragment {
         RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.movies_grid);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new GridLayoutManager(getActivity(), gridSize));
-        recyclerView.setAdapter(new MovieAdapter(getActivity()));
+        recyclerView.setAdapter(new MovieAdapter(getActivity(), mTwoPane));
 
         super.onViewCreated(view, savedInstanceState);
     }

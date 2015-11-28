@@ -1,6 +1,10 @@
 package com.cameocoder.popularmovies;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,7 +18,8 @@ import java.util.List;
 
 public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHolder> {
 
-    Activity activity;
+    private Activity activity;
+    private boolean twoPane;
 
     List<String> posterUrls = Arrays.asList(
             "http://image.tmdb.org/t/p/w342/D6e8RJf2qUstnfkTslTXNTUAlT.jpg",
@@ -26,8 +31,9 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
             "http://image.tmdb.org/t/p/w342/l3Lb8UWmqfXY9kr9YhJXvnTvf4I.jpg",
             "http://image.tmdb.org/t/p/w342/iapRFMGKvN9tsjqPlN7MIDTCezG.jpg");
 
-    public MovieAdapter(Activity activity) {
+    public MovieAdapter(Activity activity, boolean twoPane) {
         this.activity = activity;
+        this.twoPane = twoPane;
     }
 
     @Override
@@ -38,9 +44,30 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
     }
 
     @Override
-    public void onBindViewHolder(MovieItemHolder holder, int position) {
+    public void onBindViewHolder(final MovieItemHolder holder, int position) {
         String posterUrl = posterUrls.get(position);
         Picasso.with(activity).load(posterUrl).into(holder.moviePoster);
+
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (twoPane) {
+                    Bundle arguments = new Bundle();
+                    arguments.putString(MovieDetailFragment.ARG_ITEM_ID, "foo");
+                    MovieDetailFragment fragment = new MovieDetailFragment();
+                    fragment.setArguments(arguments);
+                    ((AppCompatActivity)activity).getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.movieitem_detail_container, fragment)
+                            .commit();
+                } else {
+                    Context context = v.getContext();
+                    Intent intent = new Intent(context, MovieDetailActivity.class);
+                    intent.putExtra(MovieDetailFragment.ARG_ITEM_ID, "foo");
+
+                    context.startActivity(intent);
+                }
+            }
+        });
     }
 
     @Override
