@@ -11,29 +11,62 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.cameocoder.popularmovies.model.Movie;
+import com.cameocoder.popularmovies.model.Movies;
 import com.squareup.picasso.Picasso;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
+import retrofit.Call;
+import retrofit.Callback;
+import retrofit.GsonConverterFactory;
+import retrofit.Response;
+import retrofit.Retrofit;
+
 public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHolder> {
+
+    private static String POSTER_URL = "http://image.tmdb.org/t/p/w342/";
+
+    private static final String OpenMovieAipKey = BuildConfig.OPEN_MOVIE_DB_API_KEY;
 
     private Activity activity;
     private boolean twoPane;
 
-    List<String> posterUrls = Arrays.asList(
-            "http://image.tmdb.org/t/p/w342/D6e8RJf2qUstnfkTslTXNTUAlT.jpg",
-            "http://image.tmdb.org/t/p/w342/1n9D32o30XOHMdMWuIT4AaA5ruI.jpg",
-            "http://image.tmdb.org/t/p/w342/g23cs30dCMiG4ldaoVNP1ucjs6.jpg",
-            "http://image.tmdb.org/t/p/w342/5JU9ytZJyR3zmClGmVm9q4Geqbd.jpg",
-            "http://image.tmdb.org/t/p/w342/jjBgi2r5cRt36xF6iNUEhzscEcb.jpg",
-            "http://image.tmdb.org/t/p/w342/A7HtCxFe7Ms8H7e7o2zawppbuDT.jpg",
-            "http://image.tmdb.org/t/p/w342/l3Lb8UWmqfXY9kr9YhJXvnTvf4I.jpg",
-            "http://image.tmdb.org/t/p/w342/iapRFMGKvN9tsjqPlN7MIDTCezG.jpg");
+    List<Movie> movies = new ArrayList<>();
 
     public MovieAdapter(Activity activity, boolean twoPane) {
         this.activity = activity;
         this.twoPane = twoPane;
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://api.themoviedb.org")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        MovieService movieService = retrofit.create(MovieService.class);
+
+        Call<Movies> movies = movieService.discoverMovies("popularity.desc", OpenMovieAipKey);
+        movies.enqueue(new Callback<Movies>() {
+            @Override
+            public void onResponse(Response<Movies> response, Retrofit retrofit) {
+                if (response != null && response.body() != null) {
+                    addMovies(response.body().getMovies());
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                // Ignore for now
+            }
+        });
+    }
+
+    private void addMovies(List<Movie> movies) {
+        this.movies.addAll(movies);
+        notifyDataSetChanged();
     }
 
     @Override
@@ -45,15 +78,20 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
 
     @Override
     public void onBindViewHolder(final MovieItemHolder holder, int position) {
-        String posterUrl = posterUrls.get(position);
+        final Movie currentMovie = movies.get(position);
+        final String posterUrl = POSTER_URL + currentMovie.getPosterPath();
+        final String movieId = currentMovie.getId().toString();
         Picasso.with(activity).load(posterUrl).into(holder.moviePoster);
+
+        final Movie movie = movies.get(position);
+        final Bundle arguments = new Bundle();
+        arguments.putString(MovieDetailFragment.ARG_ITEM_ID, movieId);
+        arguments.putParcelable(MovieDetailFragment.ARG_MOVIE, movie);
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (twoPane) {
-                    Bundle arguments = new Bundle();
-                    arguments.putString(MovieDetailFragment.ARG_ITEM_ID, "foo");
                     MovieDetailFragment fragment = new MovieDetailFragment();
                     fragment.setArguments(arguments);
                     ((AppCompatActivity)activity).getSupportFragmentManager().beginTransaction()
@@ -62,7 +100,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
                 } else {
                     Context context = v.getContext();
                     Intent intent = new Intent(context, MovieDetailActivity.class);
-                    intent.putExtra(MovieDetailFragment.ARG_ITEM_ID, "foo");
+                    intent.putExtras(arguments);
 
                     context.startActivity(intent);
                 }
@@ -72,15 +110,16 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
 
     @Override
     public int getItemCount() {
-        return posterUrls.size();
+        return movies.size();
     }
 
     public class MovieItemHolder extends RecyclerView.ViewHolder {
-        public ImageView moviePoster;
+        @Bind(R.id.movie_poster)
+        ImageView moviePoster;
 
         public MovieItemHolder (View itemView) {
             super(itemView);
-            moviePoster = (ImageView) itemView.findViewById(R.id.movie_poster);
+            ButterKnife.bind(this, itemView);
         }
     }
 }

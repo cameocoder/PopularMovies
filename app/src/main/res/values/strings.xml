@@ -61,4 +61,6 @@
 
     <string name="pref_title_vibrate">Vibrate</string>
     <string name="title_movie_detail">Movie Detail</string>
+    <string name="poster_content_desc">Movie poster image</string>
+    <string name="rating_format">%1$,.1f/10</string>
 </resources>
