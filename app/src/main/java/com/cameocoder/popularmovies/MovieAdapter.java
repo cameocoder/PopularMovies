@@ -3,7 +3,10 @@ package com.cameocoder.popularmovies;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -26,7 +29,7 @@ import retrofit.GsonConverterFactory;
 import retrofit.Response;
 import retrofit.Retrofit;
 
-public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHolder> {
+public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHolder> implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     private static String POSTER_URL = "http://image.tmdb.org/t/p/w342/";
 
@@ -40,7 +43,12 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
     public MovieAdapter(Activity activity, boolean twoPane) {
         this.activity = activity;
         this.twoPane = twoPane;
+        PreferenceManager.getDefaultSharedPreferences(activity).registerOnSharedPreferenceChangeListener(this);
 
+        fetchMovies(activity);
+    }
+
+    private void fetchMovies(Activity activity) {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("http://api.themoviedb.org")
                 .addConverterFactory(GsonConverterFactory.create())
@@ -48,7 +56,9 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
 
         MovieService movieService = retrofit.create(MovieService.class);
 
-        Call<Movies> movies = movieService.discoverMovies("popularity.desc", OpenMovieAipKey);
+        String sortOrder = getSortOrder(activity);
+
+        Call<Movies> movies = movieService.discoverMovies(sortOrder, OpenMovieAipKey);
         movies.enqueue(new Callback<Movies>() {
             @Override
             public void onResponse(Response<Movies> response, Retrofit retrofit) {
@@ -94,7 +104,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
                 if (twoPane) {
                     MovieDetailFragment fragment = new MovieDetailFragment();
                     fragment.setArguments(arguments);
-                    ((AppCompatActivity)activity).getSupportFragmentManager().beginTransaction()
+                    ((AppCompatActivity) activity).getSupportFragmentManager().beginTransaction()
                             .replace(R.id.movieitem_detail_container, fragment)
                             .commit();
                 } else {
@@ -113,11 +123,28 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
         return movies.size();
     }
 
+    @NonNull
+    private String getSortOrder(Context activity) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
+        return prefs.getString(activity.getString(R.string.pref_sort_order_key),
+                activity.getString(R.string.pref_value_most_popular));
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (key.equals(activity.getString(R.string.pref_sort_order_key))) {
+            movies.clear();
+            fetchMovies(activity);
+            notifyDataSetChanged();
+        }
+    }
+
+
     public class MovieItemHolder extends RecyclerView.ViewHolder {
         @Bind(R.id.movie_poster)
         ImageView moviePoster;
 
-        public MovieItemHolder (View itemView) {
+        public MovieItemHolder(View itemView) {
             super(itemView);
             ButterKnife.bind(this, itemView);
         }

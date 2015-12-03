@@ -88,7 +88,10 @@ public class MovieDetailFragment extends Fragment {
     }
 
     private String getReleaseYear(String date) {
-        String year = date.substring(0, date.indexOf('-'));
-        return year;
+        if (date != null) {
+            return date.substring(0, date.indexOf('-'));
+        } else {
+            return "????";
+        }
     }
 }
