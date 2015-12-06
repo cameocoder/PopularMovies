@@ -4,7 +4,33 @@
     <string name="action_sort">Sort Order</string>
     <string name="title_activity_settings">Settings</string>
 
+    <string name="title_movie_detail">Movie Detail</string>
+    <string name="poster_content_desc">Movie poster image</string>
+    <string name="rating_format">%1$,.1f/10</string>
+    <string name="unknown_release_year">\????</string>
+
     <!-- Strings related to Settings -->
+
+    <!-- Settings for Data & Sync -->
+    <string name="pref_header_data_sync">Data &amp; sync</string>
+
+    <string translatable="false" name="pref_title_sort_order">@string/action_sort</string>
+    <string name="pref_sort_order_key">sort_order</string>
+
+    <string name="pref_title_most_popular">Most Popular</string>
+    <string name="pref_title_highest_rated">Highest Rated</string>
+    <string-array translatable="false" name="pref_sync_sort_order_titles">
+        <item>@string/pref_title_most_popular</item>
+        <item>@string/pref_title_highest_rated</item>
+    </string-array>
+
+    <string translatable="false" name="pref_value_most_popular">popularity.desc</string>
+    <string translatable="false" name="pref_value_highest_rated">vote_average.desc</string>
+    <string-array translatable="false" name="pref_sync_sort_order_values">
+        <item>@string/pref_value_most_popular</item>
+        <item>@string/pref_value_highest_rated</item>
+    </string-array>
+
 
     <!-- Example General settings -->
     <string name="pref_header_general">General</string>
@@ -29,24 +55,6 @@
         <item>-1</item>
     </string-array>
 
-    <!-- Example settings for Data & Sync -->
-    <string name="pref_header_data_sync">Data &amp; sync</string>
-
-    <string name="pref_title_sort_order">Sort Order</string>
-    <string name="pref_sort_order_key">sort_order</string>
-
-    <string-array name="pref_sync_sort_order_titles">
-        <item>Most Popular</item>
-        <item>Highest Rated</item>
-    </string-array>
-
-    <string translatable="false" name="pref_value_most_popular">popularity.desc</string>
-    <string translatable="false" name="pref_value_highest_rated">vote_average.desc</string>
-    <string-array translatable="false" name="pref_sync_sort_order_values">
-        <item>@string/pref_value_most_popular</item>
-        <item>@string/pref_value_highest_rated</item>
-    </string-array>
-
     <string name="pref_title_system_sync_settings">System sync settings</string>
 
     <!-- Example settings for Notifications -->
@@ -58,8 +66,5 @@
     <string name="pref_ringtone_silent">Silent</string>
 
     <string name="pref_title_vibrate">Vibrate</string>
-    <string name="title_movie_detail">Movie Detail</string>
-    <string name="poster_content_desc">Movie poster image</string>
-    <string name="rating_format">%1$,.1f/10</string>
-    <string name="unknown_release_year">\????</string>
+
 </resources>

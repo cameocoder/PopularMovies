@@ -91,7 +91,7 @@ public class MovieDetailFragment extends Fragment {
         if (date != null) {
             return date.substring(0, date.indexOf('-'));
         } else {
-            return "????";
+            return getString(R.string.unknown_release_year);
         }
     }
 }

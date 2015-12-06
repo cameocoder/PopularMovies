@@ -1,0 +1,22 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.cameocoder.popularmovies.MainActivity">
+    <item
+        android:id="@+id/action_sort"
+        android:icon="@drawable/ic_sort_white_24dp"
+        android:orderInCategory="50"
+        android:title="@string/action_sort"
+        app:showAsAction="always" >
+        <menu>
+            <item
+                android:id="@+id/menuMostPopular"
+                android:title="@string/pref_title_most_popular"
+                android:checkable="true"/>
+            <item
+                android:id="@+id/menuHighestRated"
+                android:title="@string/pref_title_highest_rated"
+                android:checkable="true"/>
+        </menu>
+    </item>
+</menu>

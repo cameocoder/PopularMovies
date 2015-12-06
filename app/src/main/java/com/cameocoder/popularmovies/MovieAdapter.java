@@ -124,10 +124,10 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
     }
 
     @NonNull
-    private String getSortOrder(Context activity) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
-        return prefs.getString(activity.getString(R.string.pref_sort_order_key),
-                activity.getString(R.string.pref_value_most_popular));
+    private String getSortOrder(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        return prefs.getString(context.getString(R.string.pref_sort_order_key),
+                context.getString(R.string.pref_value_most_popular));
     }
 
     @Override
