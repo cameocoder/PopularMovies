@@ -12,6 +12,6 @@
         android:layout_centerInParent="true"
         android:adjustViewBounds="true"
         android:scaleType="fitStart"
-        tools:src="@drawable/ic_theaters_128dp" />
+        tools:src="@drawable/ic_film_strip_128dp" />
 
 </RelativeLayout>

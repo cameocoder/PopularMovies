@@ -19,7 +19,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:contentDescription="@string/poster_content_desc"
-            tools:src="@drawable/ic_theaters_128dp" />
+            tools:src="@drawable/ic_film_strip_128dp" />
 
         <LinearLayout
             android:layout_width="0dp"
