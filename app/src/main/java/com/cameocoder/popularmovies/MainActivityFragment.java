@@ -3,6 +3,7 @@ package com.cameocoder.popularmovies;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -24,6 +25,8 @@ public class MainActivityFragment extends Fragment {
 
     private boolean mTwoPane;
 
+    @Nullable @Bind(R.id.movieitem_detail_container)
+    View movieDetailContainer;
     @Bind(R.id.movies_grid)
     RecyclerView recyclerView;
 
@@ -49,7 +52,7 @@ public class MainActivityFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_main, container, false);
         ButterKnife.bind(this, view);
 
-        if (view.findViewById(R.id.movieitem_detail_container) != null) {
+        if (movieDetailContainer != null) {
             mTwoPane = true;
         }
         return view;
