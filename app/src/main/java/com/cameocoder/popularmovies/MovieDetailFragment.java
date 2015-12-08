@@ -72,7 +72,7 @@ public class MovieDetailFragment extends Fragment {
 
         final String posterUrl = POSTER_URL + movie.getPosterPath();
 
-        Picasso.with(getActivity()).load(posterUrl).into(detailPoster);
+        Picasso.with(getActivity()).load(posterUrl).placeholder(R.drawable.ic_theaters_128dp).error(R.drawable.ic_theaters_128dp).into(detailPoster);
 
         String releaseYear = getReleaseYear(movie.getReleaseDate());
         detailYear.setText(releaseYear);
