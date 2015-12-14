@@ -99,7 +99,6 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
     public void onBindViewHolder(final MovieItemHolder holder, int position) {
         final Movie currentMovie = movies.get(position);
         final String posterUrl = POSTER_URL + currentMovie.getPosterPath();
-        final String movieId = currentMovie.getId().toString();
         Picasso.with(activity).load(posterUrl).placeholder(R.drawable.ic_film_strip_128dp).error(R.drawable.ic_film_strip_128dp).into(holder.moviePoster);
 
         final Movie movie = movies.get(position);
