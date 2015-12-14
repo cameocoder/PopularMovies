@@ -37,6 +37,8 @@ public class MainActivityFragment extends Fragment {
     @BindString(R.string.pref_value_highest_rated)
     String prefValueHighestRated;
 
+    SharedPreferences prefs;
+
     public MainActivityFragment() {
     }
 
@@ -44,6 +46,7 @@ public class MainActivityFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+        prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
     }
 
     @Override
@@ -76,7 +79,6 @@ public class MainActivityFragment extends Fragment {
 
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         String sortOrder = prefs.getString(prefSortOrderKey, prefValueMostPopular);
 
         if (sortOrder.equals(prefValueMostPopular)) {
@@ -94,7 +96,6 @@ public class MainActivityFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         if (id == R.id.menuHighestRated) {
             prefs.edit().putString(prefSortOrderKey, prefValueHighestRated).apply();
         } else if (id == R.id.menuMostPopular) {

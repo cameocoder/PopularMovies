@@ -9,24 +9,26 @@
     <string name="rating_format">%1$,.1f/10</string>
     <string name="unknown_release_year">\????</string>
 
+    <string name="poster_url" translatable="false">http://image.tmdb.org/t/p/</string>
+    <string name="poster_size_large" translatable="false">w342</string>
     <!-- Strings related to Settings -->
 
     <!-- Settings for Data & Sync -->
     <string name="pref_header_data_sync">Data &amp; sync</string>
 
-    <string translatable="false" name="pref_title_sort_order">@string/action_sort</string>
+    <string name="pref_title_sort_order" translatable="false">@string/action_sort</string>
     <string name="pref_sort_order_key">sort_order</string>
 
     <string name="pref_title_most_popular">Most Popular</string>
     <string name="pref_title_highest_rated">Highest Rated</string>
-    <string-array translatable="false" name="pref_sync_sort_order_titles">
+    <string-array name="pref_sync_sort_order_titles" translatable="false">
         <item>@string/pref_title_most_popular</item>
         <item>@string/pref_title_highest_rated</item>
     </string-array>
 
-    <string translatable="false" name="pref_value_most_popular">popularity.desc</string>
-    <string translatable="false" name="pref_value_highest_rated">vote_average.desc</string>
-    <string-array translatable="false" name="pref_sync_sort_order_values">
+    <string name="pref_value_most_popular" translatable="false">popularity.desc</string>
+    <string name="pref_value_highest_rated" translatable="false">vote_average.desc</string>
+    <string-array name="pref_sync_sort_order_values" translatable="false">
         <item>@string/pref_value_most_popular</item>
         <item>@string/pref_value_highest_rated</item>
     </string-array>

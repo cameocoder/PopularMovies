@@ -1,15 +1,26 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp"
         android:textIsSelectable="true"
         tools:context=".MovieDetailFragment">
+
+        <TextView
+            android:id="@+id/detail_title"
+            style="?android:attr/textAppearanceLarge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorDetailGreen"
+            android:gravity="center_vertical"
+            android:padding="16dp"
+            android:textIsSelectable="true"
+            android:textSize="42sp"
+            tools:text="Movie Title" />
 
         <LinearLayout
             android:layout_width="match_parent"

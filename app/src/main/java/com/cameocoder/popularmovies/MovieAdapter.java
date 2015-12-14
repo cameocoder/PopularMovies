@@ -9,6 +9,7 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,6 +32,7 @@ import retrofit.Retrofit;
 
 public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHolder> implements SharedPreferences.OnSharedPreferenceChangeListener {
 
+    public final String LOG_TAG = MovieAdapter.class.getSimpleName();
     private static String POSTER_URL = "http://image.tmdb.org/t/p/w342/";
 
     private static final String OpenMovieAipKey = BuildConfig.OPEN_MOVIE_DB_API_KEY;
@@ -48,13 +50,17 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
         fetchMovies(activity);
     }
 
-    private void fetchMovies(Activity activity) {
+    private MovieService createMovieService() {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("http://api.themoviedb.org")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
-        MovieService movieService = retrofit.create(MovieService.class);
+        return retrofit.create(MovieService.class);
+    }
+
+    private void fetchMovies(Activity activity) {
+        MovieService movieService = createMovieService();
 
         String sortOrder = getSortOrder(activity);
 
@@ -70,6 +76,9 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
             @Override
             public void onFailure(Throwable t) {
                 // Ignore for now
+                if (t.getMessage() != null) {
+                    Log.e(LOG_TAG, "Unable to parse response: " + t.getMessage());
+                }
             }
         });
     }
@@ -95,7 +104,6 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
 
         final Movie movie = movies.get(position);
         final Bundle arguments = new Bundle();
-        arguments.putString(MovieDetailFragment.ARG_ITEM_ID, movieId);
         arguments.putParcelable(MovieDetailFragment.ARG_MOVIE, movie);
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
@@ -138,7 +146,6 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
             notifyDataSetChanged();
         }
     }
-
 
     public class MovieItemHolder extends RecyclerView.ViewHolder {
         @Bind(R.id.movie_poster)
