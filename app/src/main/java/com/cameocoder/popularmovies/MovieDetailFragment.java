@@ -6,6 +6,7 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.app.Fragment;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,11 +14,21 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.cameocoder.popularmovies.model.Movie;
+import com.cameocoder.popularmovies.model.ReviewResult;
+import com.cameocoder.popularmovies.model.Reviews;
+import com.cameocoder.popularmovies.model.VideoResult;
+import com.cameocoder.popularmovies.model.Videos;
 import com.squareup.picasso.Picasso;
+
+import java.util.List;
 
 import butterknife.Bind;
 import butterknife.BindString;
 import butterknife.ButterKnife;
+import retrofit.Call;
+import retrofit.Callback;
+import retrofit.Response;
+import retrofit.Retrofit;
 
 /**
  * A fragment representing a single MovieItem detail screen.
@@ -26,6 +37,9 @@ import butterknife.ButterKnife;
  * on handsets.
  */
 public class MovieDetailFragment extends Fragment {
+
+    public final String LOG_TAG = MovieDetailFragment.class.getSimpleName();
+
     /**
      * The fragment argument representing the item ID that this fragment represents.
      */
@@ -68,6 +82,8 @@ public class MovieDetailFragment extends Fragment {
             if (appBarLayout != null) {
                 appBarLayout.setTitle(movie.getTitle());
             }
+            fetchVideos();
+            fetchReviews();
         }
     }
 
@@ -103,4 +119,51 @@ public class MovieDetailFragment extends Fragment {
             return getString(R.string.unknown_release_year);
         }
     }
+
+    public void fetchVideos() {
+        MovieService movieService = RetrofitMovieService.createMovieService();
+
+        Call<Videos> videos = movieService.getVideos(movie.getId(), BuildConfig.OPEN_MOVIE_DB_API_KEY);
+        videos.enqueue(new Callback<Videos>() {
+            @Override
+            public void onResponse(Response<Videos> response, Retrofit retrofit) {
+                if (response != null && response.body() != null) {
+                    List<VideoResult> videos = response.body().getResults();
+                    Log.d(LOG_TAG, "Video Response: " + videos.size());
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                // Ignore for now
+                if (t.getMessage() != null) {
+                    Log.e(LOG_TAG, "Unable to parse video response: " + t.getMessage());
+                }
+            }
+        });
+    }
+
+    public void fetchReviews() {
+        MovieService movieService = RetrofitMovieService.createMovieService();
+
+        Call<Reviews> reviews = movieService.getReviews(movie.getId(), BuildConfig.OPEN_MOVIE_DB_API_KEY);
+        reviews.enqueue(new Callback<Reviews>() {
+            @Override
+            public void onResponse(Response<Reviews> response, Retrofit retrofit) {
+                if (response != null && response.body() != null) {
+                    List<ReviewResult> results = response.body().getReviewResults();
+                    Log.d(LOG_TAG, "Movie Response: " + results.size());
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                // Ignore for now
+                if (t.getMessage() != null) {
+                    Log.e(LOG_TAG, "Unable to parse review response: " + t.getMessage());
+                }
+            }
+        });
+    }
+
 }

@@ -17,6 +17,10 @@
                 android:id="@+id/menuHighestRated"
                 android:title="@string/pref_title_highest_rated"
                 android:checkable="true"/>
+            <item
+                android:id="@+id/menuFavorite"
+                android:title="@string/pref_title_favorite"
+                android:checkable="true"/>
         </menu>
     </item>
 </menu>

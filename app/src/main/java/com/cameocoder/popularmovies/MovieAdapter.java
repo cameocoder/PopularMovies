@@ -26,14 +26,13 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import retrofit.Call;
 import retrofit.Callback;
-import retrofit.GsonConverterFactory;
 import retrofit.Response;
 import retrofit.Retrofit;
 
 public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHolder> implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     public final String LOG_TAG = MovieAdapter.class.getSimpleName();
-    private static String POSTER_URL = "http://image.tmdb.org/t/p/w342/";
+    private static final String POSTER_URL = "http://image.tmdb.org/t/p/w342/";
 
     private static final String OpenMovieAipKey = BuildConfig.OPEN_MOVIE_DB_API_KEY;
 
@@ -46,21 +45,10 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
         this.activity = activity;
         this.twoPane = twoPane;
         PreferenceManager.getDefaultSharedPreferences(activity).registerOnSharedPreferenceChangeListener(this);
-
-        fetchMovies(activity);
     }
 
-    private MovieService createMovieService() {
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://api.themoviedb.org")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-
-        return retrofit.create(MovieService.class);
-    }
-
-    private void fetchMovies(Activity activity) {
-        MovieService movieService = createMovieService();
+    public void fetchMovies(Activity activity) {
+        MovieService movieService = RetrofitMovieService.createMovieService();
 
         String sortOrder = getSortOrder(activity);
 
