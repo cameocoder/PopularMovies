@@ -34,8 +34,6 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
     public final String LOG_TAG = MovieAdapter.class.getSimpleName();
     private static final String POSTER_URL = "http://image.tmdb.org/t/p/w342/";
 
-    private static final String OpenMovieAipKey = BuildConfig.OPEN_MOVIE_DB_API_KEY;
-
     private Activity activity;
     private boolean twoPane;
 
@@ -52,7 +50,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
 
         String sortOrder = getSortOrder(activity);
 
-        Call<Movies> movies = movieService.discoverMovies(sortOrder, OpenMovieAipKey);
+        Call<Movies> movies = movieService.discoverMovies(sortOrder, BuildConfig.OPEN_MOVIE_DB_API_KEY);
         movies.enqueue(new Callback<Movies>() {
             @Override
             public void onResponse(Response<Movies> response, Retrofit retrofit) {
@@ -89,9 +87,8 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
         final String posterUrl = POSTER_URL + currentMovie.getPosterPath();
         Picasso.with(activity).load(posterUrl).placeholder(R.drawable.ic_film_strip_128dp).error(R.drawable.ic_film_strip_128dp).into(holder.moviePoster);
 
-        final Movie movie = movies.get(position);
         final Bundle arguments = new Bundle();
-        arguments.putParcelable(MovieDetailFragment.ARG_MOVIE, movie);
+        arguments.putParcelable(MovieDetailFragment.ARG_MOVIE, currentMovie);
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override

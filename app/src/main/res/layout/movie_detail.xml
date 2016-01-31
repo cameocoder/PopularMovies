@@ -70,5 +70,15 @@
             android:textIsSelectable="true"
             tools:text="A long time ago in a galaxy far, far away" />
 
+        <include
+            layout="@layout/trailer_list"
+            android:layout_width="match_parent"
+            android:layout_height="100dp" />
+
+        <include
+            layout="@layout/review_list"
+            android:layout_width="match_parent"
+            android:layout_height="100dp" />
     </LinearLayout>
+
 </ScrollView>

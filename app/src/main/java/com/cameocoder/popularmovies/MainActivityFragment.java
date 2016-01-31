@@ -28,7 +28,7 @@ public class MainActivityFragment extends Fragment {
     @Nullable @Bind(R.id.movieitem_detail_container)
     View movieDetailContainer;
     @Bind(R.id.movies_grid)
-    RecyclerView recyclerView;
+    RecyclerView movieList;
 
     @BindString(R.string.pref_sort_order_key)
     String prefSortOrderKey;
@@ -38,6 +38,9 @@ public class MainActivityFragment extends Fragment {
     String prefValueHighestRated;
 
     SharedPreferences prefs;
+
+    GridLayoutManager layoutManager;
+    MovieAdapter adapter;
 
     public MainActivityFragment() {
     }
@@ -64,9 +67,11 @@ public class MainActivityFragment extends Fragment {
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         int gridSize = getResources().getInteger(R.integer.grid_size);
-        recyclerView.setHasFixedSize(true);
-        recyclerView.setLayoutManager(new GridLayoutManager(getActivity(), gridSize));
-        recyclerView.setAdapter(new MovieAdapter(getActivity(), mTwoPane));
+        movieList.setHasFixedSize(true);
+        layoutManager = new GridLayoutManager(getActivity(), gridSize);
+        movieList.setLayoutManager(layoutManager);
+        adapter = new MovieAdapter(getActivity(), mTwoPane);
+        movieList.setAdapter(adapter);
 
         super.onViewCreated(view, savedInstanceState);
     }
@@ -74,7 +79,7 @@ public class MainActivityFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.menu_movie_list, menu);
+            inflater.inflate(R.menu.menu_movie_list, menu);
     }
 
     @Override
@@ -89,7 +94,7 @@ public class MainActivityFragment extends Fragment {
             menu.findItem(R.id.menuHighestRated).setChecked(true);
         }
 
-        super.onPrepareOptionsMenu(menu);
+            super.onPrepareOptionsMenu(menu);
     }
 
     @Override

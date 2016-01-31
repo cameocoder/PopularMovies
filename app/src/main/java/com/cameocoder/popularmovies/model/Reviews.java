@@ -14,7 +14,7 @@ public class Reviews {
     @SerializedName("page")
     @Expose
     private Integer page;
-    @SerializedName("reviewResults")
+    @SerializedName("results")
     @Expose
     private List<ReviewResult> reviewResults = new ArrayList<ReviewResult>();
     @SerializedName("total_pages")

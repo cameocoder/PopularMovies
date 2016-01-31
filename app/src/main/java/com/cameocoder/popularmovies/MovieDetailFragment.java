@@ -5,19 +5,20 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.cameocoder.popularmovies.model.Movie;
 import com.cameocoder.popularmovies.model.ReviewResult;
 import com.cameocoder.popularmovies.model.Reviews;
-import com.cameocoder.popularmovies.model.VideoResult;
-import com.cameocoder.popularmovies.model.Videos;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
@@ -60,6 +61,14 @@ public class MovieDetailFragment extends Fragment {
     TextView detailRating;
     @Bind(R.id.detail_overview)
     TextView detailOverview;
+    @Bind(R.id.button_favorite)
+    Button favoriteButton;
+
+    @Bind(R.id.trailer_list)
+    RecyclerView trailerList;
+    @Bind(R.id.review_list)
+    RecyclerView reviewList;
+
     @BindString(R.string.rating_format)
     String ratingFormat;
 
@@ -82,7 +91,6 @@ public class MovieDetailFragment extends Fragment {
             if (appBarLayout != null) {
                 appBarLayout.setTitle(movie.getTitle());
             }
-            fetchVideos();
             fetchReviews();
         }
     }
@@ -93,7 +101,20 @@ public class MovieDetailFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.movie_detail, container, false);
         ButterKnife.bind(this, rootView);
 
-        final String posterUrl = POSTER_URL + movie.getPosterPath();
+        trailerList.setHasFixedSize(true);
+        trailerList.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, true));
+        TrailerAdapter trailerAdapter = new TrailerAdapter(getActivity(), movie.getId());
+        trailerList.setAdapter(trailerAdapter);
+        trailerAdapter.fetchVideos();
+
+        reviewList.setHasFixedSize(true);
+        reviewList.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, true));
+        ReviewAdapter reviewAdapter = new ReviewAdapter(getActivity(), movie.getId());
+        reviewList.setAdapter(reviewAdapter);
+        reviewAdapter.fetchReviews();
+
+        final String posterUrl;
+        posterUrl = POSTER_URL + movie.getPosterPath();
 
         Picasso.with(getActivity()).load(posterUrl).placeholder(R.drawable.ic_film_strip_128dp).error(R.drawable.ic_film_strip_128dp).into(detailPoster);
 
@@ -109,6 +130,12 @@ public class MovieDetailFragment extends Fragment {
 
         detailOverview.setText(movie.getOverview());
 
+        favoriteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
         return rootView;
     }
 
@@ -118,29 +145,6 @@ public class MovieDetailFragment extends Fragment {
         } else {
             return getString(R.string.unknown_release_year);
         }
-    }
-
-    public void fetchVideos() {
-        MovieService movieService = RetrofitMovieService.createMovieService();
-
-        Call<Videos> videos = movieService.getVideos(movie.getId(), BuildConfig.OPEN_MOVIE_DB_API_KEY);
-        videos.enqueue(new Callback<Videos>() {
-            @Override
-            public void onResponse(Response<Videos> response, Retrofit retrofit) {
-                if (response != null && response.body() != null) {
-                    List<VideoResult> videos = response.body().getResults();
-                    Log.d(LOG_TAG, "Video Response: " + videos.size());
-                }
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                // Ignore for now
-                if (t.getMessage() != null) {
-                    Log.e(LOG_TAG, "Unable to parse video response: " + t.getMessage());
-                }
-            }
-        });
     }
 
     public void fetchReviews() {
