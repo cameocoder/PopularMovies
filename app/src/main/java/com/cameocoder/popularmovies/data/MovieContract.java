@@ -12,6 +12,7 @@ public class MovieContract {
     public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
 
     public static final String PATH_MOVIE = "movies";
+    public static final String PATH_FAVORITE = "favorite";
 
     /* Inner class that defines the table contents of the movies table */
     public static final class MovieEntry implements BaseColumns {
@@ -52,4 +53,32 @@ public class MovieContract {
             return uri.getPathSegments().get(1);
         }
     }
+
+    /* Inner class that defines the table contents of the favorites table */
+    public static final class FavoriteEntry implements BaseColumns {
+
+        public static final Uri CONTENT_URI =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_FAVORITE).build();
+
+        public static final String CONTENT_TYPE =
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAVORITE;
+        public static final String CONTENT_ITEM_TYPE =
+                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAVORITE;
+
+        // Table name
+        public static final String TABLE_NAME = "favorites";
+
+
+        public static final String COLUMN_ID = "id";
+
+
+        public static Uri buildFavoriteWithId(long id) {
+            return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+
+        public static String getFavoriteIDFromUri(Uri uri) {
+            return uri.getPathSegments().get(1);
+        }
+    }
+
 }

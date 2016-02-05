@@ -5,12 +5,13 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import com.cameocoder.popularmovies.data.MovieContract.FavoriteEntry;
 import com.cameocoder.popularmovies.data.MovieContract.MovieEntry;
 
 public class MovieDbHelper extends SQLiteOpenHelper {
 
     // If you change the database schema, you must increment the database version.
-    private static final int DATABASE_VERSION = 5;
+    private static final int DATABASE_VERSION = 6;
 
     static final String DATABASE_NAME = "movies.db";
 
@@ -22,8 +23,8 @@ public class MovieDbHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
 
         final String SQL_CREATE_MOVIE_TABLE = "CREATE TABLE " + MovieEntry.TABLE_NAME + " (" +
-                MovieEntry._ID + " INTEGER PRIMARY KEY," +
-                MovieEntry.COLUMN_ID + " INTEGER UNIQUE NOT NULL UNIQUE ON CONFLICT REPLACE, " +
+                MovieEntry._ID + " INTEGER PRIMARY KEY, " +
+                MovieEntry.COLUMN_ID + " INTEGER NOT NULL, " +
                 MovieEntry.COLUMN_TITLE + " TEXT, " +
                 MovieEntry.COLUMN_ORIGINAL_TITLE + " TEXT, " +
                 MovieEntry.COLUMN_OVERVIEW + " TEXT, " +
@@ -36,10 +37,22 @@ public class MovieDbHelper extends SQLiteOpenHelper {
                 MovieEntry.COLUMN_POPULARITY + " REAL, " +
                 MovieEntry.COLUMN_VOTE_AVERAGE + " REAL, " +
                 MovieEntry.COLUMN_VOTE_COUNT + " INTEGER, " +
-                MovieEntry.COLUMN_ADULT + " BOOLEAN " +
-                " );";
+                MovieEntry.COLUMN_ADULT + " BOOLEAN, " +
+                " UNIQUE (" + MovieEntry.COLUMN_ID + ") ON CONFLICT REPLACE);";
+
+        final String SQL_CREATE_FAVORITE_TABLE = "CREATE TABLE "+ FavoriteEntry.TABLE_NAME + " (" +
+                FavoriteEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                FavoriteEntry.COLUMN_ID + " INTEGER NOT NULL, " +
+
+                " FOREIGN KEY (" + FavoriteEntry.COLUMN_ID + ") REFERENCES " +
+                MovieEntry.TABLE_NAME + " (" + MovieEntry.COLUMN_ID + "), " +
+
+                // To assure the application have just one weather entry per day
+                // per location, it's created a UNIQUE constraint with REPLACE strategy
+                " UNIQUE (" + FavoriteEntry.COLUMN_ID + ") ON CONFLICT REPLACE);";
 
         db.execSQL(SQL_CREATE_MOVIE_TABLE);
+        db.execSQL(SQL_CREATE_FAVORITE_TABLE);
 
     }
 
@@ -52,6 +65,7 @@ public class MovieDbHelper extends SQLiteOpenHelper {
         // If you want to update the schema without wiping data, commenting out the next 2 lines
         // should be your top priority before modifying this method.
         db.execSQL("DROP TABLE IF EXISTS " + MovieEntry.TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + FavoriteEntry.TABLE_NAME);
         onCreate(db);
 
     }
