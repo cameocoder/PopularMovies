@@ -7,7 +7,7 @@ import android.provider.BaseColumns;
 
 public class MovieContract {
 
-    public static final String CONTENT_AUTHORITY = "com.cameocoder.popularmovies";
+    public static final String CONTENT_AUTHORITY = "com.cameocoder.popularmovies.app";
 
     public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
 
@@ -44,9 +44,12 @@ public class MovieContract {
         public static final String COLUMN_ADULT = "adult";
 
 
-        public static Uri buildMovieUri(long id) {
+        public static Uri buildMovieWithId(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
 
+        public static String getMovieIDFromUri(Uri uri) {
+            return uri.getPathSegments().get(1);
+        }
     }
 }

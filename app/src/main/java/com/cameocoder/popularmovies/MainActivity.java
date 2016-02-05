@@ -8,15 +8,25 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.cameocoder.popularmovies.settings.SettingsActivity;
+import com.cameocoder.popularmovies.sync.MovieSyncAdapter;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
 
 public class MainActivity extends AppCompatActivity {
+
+    @Bind(R.id.toolbar)
+    Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        ButterKnife.bind(this);
+
         setSupportActionBar(toolbar);
+
+        MovieSyncAdapter.initializeSyncAdapter(this);
     }
 
     @Override

@@ -10,7 +10,7 @@ import com.cameocoder.popularmovies.data.MovieContract.MovieEntry;
 public class MovieDbHelper extends SQLiteOpenHelper {
 
     // If you change the database schema, you must increment the database version.
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 5;
 
     static final String DATABASE_NAME = "movies.db";
 
@@ -23,20 +23,20 @@ public class MovieDbHelper extends SQLiteOpenHelper {
 
         final String SQL_CREATE_MOVIE_TABLE = "CREATE TABLE " + MovieEntry.TABLE_NAME + " (" +
                 MovieEntry._ID + " INTEGER PRIMARY KEY," +
-                MovieEntry.COLUMN_ID + " INTEGER UNIQUE NOT NULL " +
-                MovieEntry.COLUMN_TITLE + " TEXT NOT NULL, " +
-                MovieEntry.COLUMN_ORIGINAL_TITLE + " TEXT NOT NULL, " +
-                MovieEntry.COLUMN_OVERVIEW + " TEXT NOT NULL, " +
-                MovieEntry.COLUMN_RELEASE_DATE + " DATE NOT NULL, " +
-                MovieEntry.COLUMN_POSTER_PATH + " TEXT NOT NULL, " +
-                MovieEntry.COLUMN_BACKDROP_PATH + " TEXT NOT NULL, " +
-                MovieEntry.COLUMN_ORIGINAL_LANGUAGE + " TEXT NOT NULL, " +
-                MovieEntry.COLUMN_VIDEO + " BOOLEAN NOT NULL, " +
-                MovieEntry.COLUMN_GENRE_IDS + " TEXT NOT NULL, " +
-                MovieEntry.COLUMN_POPULARITY + " REAL NOT NULL, " +
-                MovieEntry.COLUMN_VOTE_AVERAGE + " REAL NOT NULL, " +
-                MovieEntry.COLUMN_VOTE_COUNT + " INTEGER NOT NULL, " +
-                MovieEntry.COLUMN_ADULT + " BOOLEAN NOT NULL, " +
+                MovieEntry.COLUMN_ID + " INTEGER UNIQUE NOT NULL UNIQUE ON CONFLICT REPLACE, " +
+                MovieEntry.COLUMN_TITLE + " TEXT, " +
+                MovieEntry.COLUMN_ORIGINAL_TITLE + " TEXT, " +
+                MovieEntry.COLUMN_OVERVIEW + " TEXT, " +
+                MovieEntry.COLUMN_RELEASE_DATE + " TEXT, " +
+                MovieEntry.COLUMN_POSTER_PATH + " TEXT, " +
+                MovieEntry.COLUMN_BACKDROP_PATH + " TEXT, " +
+                MovieEntry.COLUMN_ORIGINAL_LANGUAGE + " TEXT, " +
+                MovieEntry.COLUMN_VIDEO + " BOOLEAN, " +
+                MovieEntry.COLUMN_GENRE_IDS + " TEXT, " +
+                MovieEntry.COLUMN_POPULARITY + " REAL, " +
+                MovieEntry.COLUMN_VOTE_AVERAGE + " REAL, " +
+                MovieEntry.COLUMN_VOTE_COUNT + " INTEGER, " +
+                MovieEntry.COLUMN_ADULT + " BOOLEAN " +
                 " );";
 
         db.execSQL(SQL_CREATE_MOVIE_TABLE);

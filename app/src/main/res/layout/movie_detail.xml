@@ -55,10 +55,7 @@
                     android:id="@+id/button_favorite"
                     android:layout_width="@dimen/favorite_button_width"
                     android:layout_height="wrap_content"
-                    android:text="@string/mark_as_favorite"
-                    android:visibility="gone"
-                    tools:visibility="visible" />
-
+                    android:text="@string/mark_as_favorite" />
             </LinearLayout>
         </LinearLayout>
 
@@ -70,10 +67,32 @@
             android:textIsSelectable="true"
             tools:text="A long time ago in a galaxy far, far away" />
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@drawable/separator" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/trailers"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
         <include
             layout="@layout/trailer_list"
             android:layout_width="match_parent"
             android:layout_height="100dp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@drawable/separator" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/reviews"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
 
         <include
             layout="@layout/review_list"

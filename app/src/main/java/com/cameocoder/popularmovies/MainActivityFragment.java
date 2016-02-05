@@ -1,10 +1,16 @@
 package com.cameocoder.popularmovies;
 
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -14,6 +20,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.cameocoder.popularmovies.data.MovieContract;
+import com.cameocoder.popularmovies.sync.MovieSyncAdapter;
+
 import butterknife.Bind;
 import butterknife.BindString;
 import butterknife.ButterKnife;
@@ -21,11 +30,24 @@ import butterknife.ButterKnife;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MainActivityFragment extends Fragment {
+public class MainActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+
+    private static final String BUNDLE_RECYCLER_LAYOUT = "layoutManager";
+
+    private static final String MOVIE_LIST = "movie_list";
+    public static final int MOVIE_LOADER = 0;
+
+    public static final String[] MOVIE_COLUMNS = {
+            MovieContract.MovieEntry._ID,
+            MovieContract.MovieEntry.COLUMN_TITLE,
+            MovieContract.MovieEntry.COLUMN_POSTER_PATH,
+            MovieContract.MovieEntry.COLUMN_ID
+    };
 
     private boolean mTwoPane;
 
-    @Nullable @Bind(R.id.movieitem_detail_container)
+    @Nullable
+    @Bind(R.id.movieitem_detail_container)
     View movieDetailContainer;
     @Bind(R.id.movies_grid)
     RecyclerView movieList;
@@ -49,6 +71,7 @@ public class MainActivityFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+        MovieSyncAdapter.syncImmediately(getContext());
         prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
     }
 
@@ -62,6 +85,12 @@ public class MainActivityFragment extends Fragment {
             mTwoPane = true;
         }
         return view;
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        getLoaderManager().initLoader(MOVIE_LOADER, null, this);
+        super.onActivityCreated(savedInstanceState);
     }
 
     @Override
@@ -79,7 +108,7 @@ public class MainActivityFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
-            inflater.inflate(R.menu.menu_movie_list, menu);
+        inflater.inflate(R.menu.menu_movie_list, menu);
     }
 
     @Override
@@ -94,7 +123,7 @@ public class MainActivityFragment extends Fragment {
             menu.findItem(R.id.menuHighestRated).setChecked(true);
         }
 
-            super.onPrepareOptionsMenu(menu);
+        super.onPrepareOptionsMenu(menu);
     }
 
     @Override
@@ -112,4 +141,51 @@ public class MainActivityFragment extends Fragment {
 
     }
 
+    @Override
+    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
+        super.onViewStateRestored(savedInstanceState);
+
+        if (savedInstanceState != null) {
+//            List<Movie> movies = (List<Movie>)savedInstanceState.get(MOVIE_LIST);
+            Parcelable savedRecyclerLayoutState = savedInstanceState.getParcelable(BUNDLE_RECYCLER_LAYOUT);
+            movieList.getLayoutManager().onRestoreInstanceState(savedRecyclerLayoutState);
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putParcelable(BUNDLE_RECYCLER_LAYOUT, movieList.getLayoutManager().onSaveInstanceState());
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        Uri uri = MovieContract.MovieEntry.CONTENT_URI;
+        String sortOrder = prefs.getString(prefSortOrderKey, prefValueMostPopular);
+
+        String cursorSortOrder = MovieContract.MovieEntry.COLUMN_POPULARITY + " DESC";
+        if (sortOrder.equals(prefValueMostPopular)) {
+            cursorSortOrder = MovieContract.MovieEntry.COLUMN_POPULARITY + " DESC";
+        } else if (sortOrder.equals(prefValueHighestRated)) {
+            cursorSortOrder = MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE + " DESC";
+        }
+
+        return new CursorLoader(getActivity(),
+                uri,
+                MOVIE_COLUMNS,
+                null,
+                null,
+                cursorSortOrder);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        adapter.swapCursor(data);
+
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        adapter.swapCursor(null);
+    }
 }

@@ -18,6 +18,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        tools:text="Farcus Masbender" />
+        android:maxLines="2"
+        android:ellipsize="end"
+        tools:text="This is the worst movie ever written and here is a very long review where I will tell you how much I really hate this movie." />
 
 </LinearLayout>

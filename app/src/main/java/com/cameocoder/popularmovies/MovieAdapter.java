@@ -4,30 +4,22 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-import com.cameocoder.popularmovies.model.Movie;
-import com.cameocoder.popularmovies.model.Movies;
+import com.cameocoder.popularmovies.data.MovieContract;
 import com.squareup.picasso.Picasso;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import retrofit.Call;
-import retrofit.Callback;
-import retrofit.Response;
-import retrofit.Retrofit;
 
 public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHolder> implements SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -35,9 +27,8 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
     private static final String POSTER_URL = "http://image.tmdb.org/t/p/w342/";
 
     private Activity activity;
+    Cursor cursor;
     private boolean twoPane;
-
-    List<Movie> movies = new ArrayList<>();
 
     public MovieAdapter(Activity activity, boolean twoPane) {
         this.activity = activity;
@@ -45,32 +36,8 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
         PreferenceManager.getDefaultSharedPreferences(activity).registerOnSharedPreferenceChangeListener(this);
     }
 
-    public void fetchMovies(Activity activity) {
-        MovieService movieService = RetrofitMovieService.createMovieService();
-
-        String sortOrder = getSortOrder(activity);
-
-        Call<Movies> movies = movieService.discoverMovies(sortOrder, BuildConfig.OPEN_MOVIE_DB_API_KEY);
-        movies.enqueue(new Callback<Movies>() {
-            @Override
-            public void onResponse(Response<Movies> response, Retrofit retrofit) {
-                if (response != null && response.body() != null) {
-                    addMovies(response.body().getMovies());
-                }
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                // Ignore for now
-                if (t.getMessage() != null) {
-                    Log.e(LOG_TAG, "Unable to parse response: " + t.getMessage());
-                }
-            }
-        });
-    }
-
-    private void addMovies(List<Movie> movies) {
-        this.movies.addAll(movies);
+    public void swapCursor(Cursor cursor) {
+        this.cursor = cursor;
         notifyDataSetChanged();
     }
 
@@ -83,12 +50,15 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
 
     @Override
     public void onBindViewHolder(final MovieItemHolder holder, int position) {
-        final Movie currentMovie = movies.get(position);
-        final String posterUrl = POSTER_URL + currentMovie.getPosterPath();
+        cursor.moveToPosition(position);
+        final int movieId = cursor.getInt(cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_ID));
+        final String posterPath = cursor.getString(cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_POSTER_PATH));
+        final String posterUrl = POSTER_URL + posterPath;
+
         Picasso.with(activity).load(posterUrl).placeholder(R.drawable.ic_film_strip_128dp).error(R.drawable.ic_film_strip_128dp).into(holder.moviePoster);
 
         final Bundle arguments = new Bundle();
-        arguments.putParcelable(MovieDetailFragment.ARG_MOVIE, currentMovie);
+        arguments.putInt(MovieDetailFragment.ARG_MOVIE_ID, movieId);
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -112,7 +82,11 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
 
     @Override
     public int getItemCount() {
-        return movies.size();
+        if (cursor != null) {
+            return cursor.getCount();
+        } else {
+            return 0;
+        }
     }
 
     @NonNull
@@ -125,8 +99,6 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieItemHol
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if (key.equals(activity.getString(R.string.pref_sort_order_key))) {
-            movies.clear();
-            fetchMovies(activity);
             notifyDataSetChanged();
         }
     }

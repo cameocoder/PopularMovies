@@ -1,10 +1,15 @@
 package com.cameocoder.popularmovies;
 
 import android.app.Activity;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
@@ -16,7 +21,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.cameocoder.popularmovies.model.Movie;
+import com.cameocoder.popularmovies.data.MovieContract;
 import com.cameocoder.popularmovies.model.ReviewResult;
 import com.cameocoder.popularmovies.model.Reviews;
 import com.squareup.picasso.Picasso;
@@ -37,18 +42,27 @@ import retrofit.Retrofit;
  * in two-pane mode (on tablets) or a {@link MovieDetailActivity}
  * on handsets.
  */
-public class MovieDetailFragment extends Fragment {
+public class MovieDetailFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
     public final String LOG_TAG = MovieDetailFragment.class.getSimpleName();
 
     /**
      * The fragment argument representing the item ID that this fragment represents.
      */
-    public static final String ARG_MOVIE = "movie";
+    public static final String ARG_MOVIE_ID = "movieId";
 
     private static String POSTER_URL = "http://image.tmdb.org/t/p/w342/";
 
-    private Movie movie;
+    public static final int DETAIL_LOADER = 2;
+
+    public static final String[] MOVIE_COLUMNS = {
+            MovieContract.MovieEntry.COLUMN_ID,
+            MovieContract.MovieEntry.COLUMN_TITLE,
+            MovieContract.MovieEntry.COLUMN_OVERVIEW,
+            MovieContract.MovieEntry.COLUMN_POSTER_PATH,
+            MovieContract.MovieEntry.COLUMN_RELEASE_DATE,
+            MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE
+    };
 
     @Nullable
     @Bind(R.id.detail_title)
@@ -72,6 +86,8 @@ public class MovieDetailFragment extends Fragment {
     @BindString(R.string.rating_format)
     String ratingFormat;
 
+    private int movieId;
+
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
@@ -83,14 +99,15 @@ public class MovieDetailFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (getArguments().containsKey(ARG_MOVIE)) {
-            movie = getArguments().getParcelable(ARG_MOVIE);
+        if (getArguments().containsKey(ARG_MOVIE_ID)) {
+            movieId = getArguments().getInt(ARG_MOVIE_ID);
 
             Activity activity = this.getActivity();
             CollapsingToolbarLayout appBarLayout = (CollapsingToolbarLayout) activity.findViewById(R.id.toolbar_layout);
             if (appBarLayout != null) {
-                appBarLayout.setTitle(movie.getTitle());
+//                appBarLayout.setTitle(movie.getTitle());
             }
+            getLoaderManager().initLoader(DETAIL_LOADER, null, this);
             fetchReviews();
         }
     }
@@ -103,39 +120,16 @@ public class MovieDetailFragment extends Fragment {
 
         trailerList.setHasFixedSize(true);
         trailerList.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, true));
-        TrailerAdapter trailerAdapter = new TrailerAdapter(getActivity(), movie.getId());
+        TrailerAdapter trailerAdapter = new TrailerAdapter(getActivity(), movieId);
         trailerList.setAdapter(trailerAdapter);
         trailerAdapter.fetchVideos();
 
         reviewList.setHasFixedSize(true);
         reviewList.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, true));
-        ReviewAdapter reviewAdapter = new ReviewAdapter(getActivity(), movie.getId());
+        ReviewAdapter reviewAdapter = new ReviewAdapter(getActivity(), movieId);
         reviewList.setAdapter(reviewAdapter);
         reviewAdapter.fetchReviews();
 
-        final String posterUrl;
-        posterUrl = POSTER_URL + movie.getPosterPath();
-
-        Picasso.with(getActivity()).load(posterUrl).placeholder(R.drawable.ic_film_strip_128dp).error(R.drawable.ic_film_strip_128dp).into(detailPoster);
-
-        if (detailTitle != null) {
-            detailTitle.setText(movie.getTitle());
-        }
-        String releaseYear = getReleaseYear(movie.getReleaseDate());
-        detailYear.setText(releaseYear);
-
-        double voteAverage = movie.getVoteAverage();
-
-        detailRating.setText(String.format(ratingFormat, voteAverage));
-
-        detailOverview.setText(movie.getOverview());
-
-        favoriteButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-        });
         return rootView;
     }
 
@@ -150,7 +144,7 @@ public class MovieDetailFragment extends Fragment {
     public void fetchReviews() {
         MovieService movieService = RetrofitMovieService.createMovieService();
 
-        Call<Reviews> reviews = movieService.getReviews(movie.getId(), BuildConfig.OPEN_MOVIE_DB_API_KEY);
+        Call<Reviews> reviews = movieService.getReviews(movieId, BuildConfig.OPEN_MOVIE_DB_API_KEY);
         reviews.enqueue(new Callback<Reviews>() {
             @Override
             public void onResponse(Response<Reviews> response, Retrofit retrofit) {
@@ -170,4 +164,54 @@ public class MovieDetailFragment extends Fragment {
         });
     }
 
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        Uri uri = MovieContract.MovieEntry.buildMovieWithId(movieId);
+
+        return new CursorLoader(getActivity(),
+                uri,
+                MOVIE_COLUMNS,
+                null,
+                null,
+                null);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        if (data != null && data.moveToFirst()) {
+            final int movieId = data.getInt(data.getColumnIndex(MovieContract.MovieEntry.COLUMN_ID));
+            Log.d(LOG_TAG, "Movie id: " + movieId);
+
+            ;
+
+            final String posterPath = data.getString(data.getColumnIndex(MovieContract.MovieEntry.COLUMN_POSTER_PATH));
+            final String posterUrl = POSTER_URL + posterPath;
+
+            Picasso.with(getActivity()).load(posterUrl).placeholder(R.drawable.ic_film_strip_128dp).error(R.drawable.ic_film_strip_128dp).into(detailPoster);
+
+            if (detailTitle != null) {
+                detailTitle.setText(data.getString(data.getColumnIndex(MovieContract.MovieEntry.COLUMN_TITLE)));
+            }
+            String releaseYear = getReleaseYear(data.getString(data.getColumnIndex(MovieContract.MovieEntry.COLUMN_RELEASE_DATE)));
+            detailYear.setText(releaseYear);
+
+            double voteAverage = data.getDouble(data.getColumnIndex(MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE));
+
+            detailRating.setText(String.format(ratingFormat, voteAverage));
+
+            detailOverview.setText(data.getString(data.getColumnIndex(MovieContract.MovieEntry.COLUMN_OVERVIEW)));
+
+            favoriteButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                }
+            });
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+
+    }
 }
