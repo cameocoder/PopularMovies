@@ -19,6 +19,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.cameocoder.popularmovies.data.MovieContract.FavoriteEntry;
 import com.cameocoder.popularmovies.data.MovieContract.MovieEntry;
@@ -59,6 +60,8 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     View movieDetailContainer;
     @Bind(R.id.movies_grid)
     RecyclerView movieList;
+    @Bind(R.id.movies_grid_empty)
+    TextView movieListEmpty;
 
     @BindString(R.string.pref_sort_order_key)
     String prefSortOrderKey;
@@ -198,8 +201,14 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        adapter.swapCursor(data);
-
+        if (data != null && data.moveToFirst()) {
+            movieListEmpty.setVisibility(View.GONE);
+            movieList.setVisibility(View.VISIBLE);
+            adapter.swapCursor(data);
+        } else {
+            movieListEmpty.setVisibility(View.VISIBLE);
+            movieList.setVisibility(View.GONE);
+        }
     }
 
     @Override
