@@ -73,6 +73,7 @@
 
     <string name="pref_title_vibrate">Vibrate</string>
     <string name="mark_as_favorite">Mark as Favorite</string>
+    <string name="remove_as_favorite">Remove as Favorite</string>
     <string name="trailers">Trailers:</string>
     <string name="reviews">Reviews:</string>
 

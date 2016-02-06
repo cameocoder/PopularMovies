@@ -19,9 +19,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 import com.cameocoder.popularmovies.data.MovieContract.FavoriteEntry;
 import com.cameocoder.popularmovies.data.MovieContract.MovieEntry;
@@ -84,7 +84,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     @Bind(R.id.detail_overview)
     TextView detailOverview;
     @Bind(R.id.button_favorite)
-    Button favoriteButton;
+    ToggleButton favoriteButton;
 
     @Bind(R.id.trailer_list)
     RecyclerView trailerList;
@@ -147,12 +147,18 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
 
             }
         });
+
         return rootView;
     }
 
     private void handleFavoriteButtonClick() {
-        final ContentResolver contentResolver = getContext().getContentResolver();
+        ContentResolver contentResolver = getContext().getContentResolver();
         if (isFavorite) {
+            contentResolver.delete(
+                    FavoriteEntry.buildFavoriteWithId(movieId),
+                    null,
+                    null);
+        } else {
             ContentValues favoriteValues = new ContentValues();
             favoriteValues.put(FavoriteEntry.COLUMN_ID, movieId);
 
@@ -160,21 +166,11 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                     FavoriteEntry.CONTENT_URI,
                     favoriteValues
             );
-        } else {
-
-            contentResolver.delete(
-                    FavoriteEntry.buildFavoriteWithId(movieId),
-                    null,
-                    null);
         }
     }
 
     private void updateFavoriteButton(boolean favorite) {
-        if (favorite) {
-            favoriteButton.setVisibility(View.GONE);
-        } else {
-            favoriteButton.setVisibility(View.VISIBLE);
-        }
+            favoriteButton.setChecked(favorite);
     }
 
     private String getReleaseYear(String date) {
@@ -265,9 +261,15 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
 
             case FAVORITE_LOADER: {
                 if (data != null && data.moveToFirst()) {
-                    isFavorite = true;
+                    final int movieId = data.getInt(data.getColumnIndex(FavoriteEntry.COLUMN_ID));
+                    if (movieId == this.movieId) {
+                        isFavorite = true;
+                    }
+                } else {
+                    isFavorite = false;
                 }
                 updateFavoriteButton(isFavorite);
+                Log.d(LOG_TAG, "Favorite = " + isFavorite);
                 break;
             }
 
