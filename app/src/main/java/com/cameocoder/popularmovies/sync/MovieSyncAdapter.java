@@ -17,7 +17,7 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.cameocoder.popularmovies.BuildConfig;
-import com.cameocoder.popularmovies.MovieService;
+import com.cameocoder.popularmovies.RetrofitMovieInterface;
 import com.cameocoder.popularmovies.R;
 import com.cameocoder.popularmovies.RetrofitMovieService;
 import com.cameocoder.popularmovies.data.MovieContract;
@@ -36,7 +36,7 @@ import retrofit.Retrofit;
 public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     public final String LOG_TAG = MovieSyncAdapter.class.getSimpleName();
 
-    // Interval at which to sync with the weather, in seconds.
+    // Interval at which to sync movies, in seconds.
     // 60 seconds (1 minute) * 180 = 3 hours
     public static final int SYNC_INTERVAL = 60 * 180;
     public static final int SYNC_FLEXTIME = SYNC_INTERVAL/3;
@@ -52,11 +52,11 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     public void fetchMovies(Context context) {
-        MovieService movieService = RetrofitMovieService.createMovieService();
+        RetrofitMovieInterface retrofitMovieInterface = RetrofitMovieService.createMovieService();
 
         String sortOrder = getSortOrder(context);
 
-        Call<Movies> movies = movieService.discoverMovies(sortOrder, BuildConfig.OPEN_MOVIE_DB_API_KEY);
+        Call<Movies> movies = retrofitMovieInterface.discoverMovies(sortOrder, BuildConfig.OPEN_MOVIE_DB_API_KEY);
         movies.enqueue(new Callback<Movies>() {
             @Override
             public void onResponse(Response<Movies> response, Retrofit retrofit) {

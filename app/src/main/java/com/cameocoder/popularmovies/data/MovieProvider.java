@@ -84,6 +84,16 @@ public class MovieProvider extends ContentProvider {
         );
     }
 
+    private Cursor getFavorites(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        return favoriteByIdQueryBuilder.query(mOpenHelper.getReadableDatabase(),
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+    }
     @Override
     public boolean onCreate() {
         mOpenHelper = new MovieDbHelper(getContext());
@@ -135,15 +145,8 @@ public class MovieProvider extends ContentProvider {
                 break;
             }
             case FAVORITES: {
-                retCursor = db.query(
-                        FavoriteEntry.TABLE_NAME,
-                        projection,
-                        selection,
-                        selectionArgs,
-                        null,
-                        null,
-                        sortOrder
-                );
+                retCursor = getFavorites(uri, projection, selection, selectionArgs, sortOrder);
+
                 break;
             }
             case FAVORITE_WITH_ID: {
@@ -213,8 +216,10 @@ public class MovieProvider extends ContentProvider {
                 break;
             }
             case FAVORITE_WITH_ID: {
+                String movie_id = FavoriteEntry.getFavoriteIDFromUri(uri);
                 rowsDeleted = db.delete(
-                        FavoriteEntry.TABLE_NAME, selection, selectionArgs);
+                        FavoriteEntry.TABLE_NAME, favortiesIdSelection,
+                        new String[] { movie_id });
                 break;
             }
             default:

@@ -20,7 +20,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.cameocoder.popularmovies.data.MovieContract;
+import com.cameocoder.popularmovies.data.MovieContract.FavoriteEntry;
+import com.cameocoder.popularmovies.data.MovieContract.MovieEntry;
 import com.cameocoder.popularmovies.sync.MovieSyncAdapter;
 
 import butterknife.Bind;
@@ -28,7 +29,7 @@ import butterknife.BindString;
 import butterknife.ButterKnife;
 
 /**
- * A placeholder fragment containing a simple view.
+ * Movie list fragment
  */
 public class MainActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
@@ -38,10 +39,17 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     public static final int MOVIE_LOADER = 0;
 
     public static final String[] MOVIE_COLUMNS = {
-            MovieContract.MovieEntry._ID,
-            MovieContract.MovieEntry.COLUMN_TITLE,
-            MovieContract.MovieEntry.COLUMN_POSTER_PATH,
-            MovieContract.MovieEntry.COLUMN_ID
+            MovieEntry._ID,
+            MovieEntry.COLUMN_TITLE,
+            MovieEntry.COLUMN_POSTER_PATH,
+            MovieEntry.COLUMN_ID
+    };
+
+    public static final String[] FAVORITE_COLUMNS = {
+            FavoriteEntry.TABLE_NAME + "." + FavoriteEntry._ID,
+            MovieEntry.COLUMN_TITLE,
+            MovieEntry.COLUMN_POSTER_PATH,
+            MovieEntry.TABLE_NAME + "." + MovieEntry.COLUMN_ID
     };
 
     private boolean mTwoPane;
@@ -56,6 +64,8 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     String prefSortOrderKey;
     @BindString(R.string.pref_value_most_popular)
     String prefValueMostPopular;
+    @BindString(R.string.pref_value_favorite)
+    String prefValueFavorite;
     @BindString(R.string.pref_value_highest_rated)
     String prefValueHighestRated;
 
@@ -117,10 +127,10 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
         if (sortOrder.equals(prefValueMostPopular)) {
             menu.findItem(R.id.menuMostPopular).setChecked(true);
-            menu.findItem(R.id.menuHighestRated).setChecked(false);
         } else if (sortOrder.equals(prefValueHighestRated)) {
-            menu.findItem(R.id.menuMostPopular).setChecked(false);
             menu.findItem(R.id.menuHighestRated).setChecked(true);
+        } else if (sortOrder.equals(prefValueFavorite)) {
+            menu.findItem(R.id.menuFavorite).setChecked(true);
         }
 
         super.onPrepareOptionsMenu(menu);
@@ -134,8 +144,11 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
             prefs.edit().putString(prefSortOrderKey, prefValueHighestRated).apply();
         } else if (id == R.id.menuMostPopular) {
             prefs.edit().putString(prefSortOrderKey, prefValueMostPopular).apply();
+        } else if (id == R.id.menuFavorite) {
+            prefs.edit().putString(prefSortOrderKey, prefValueFavorite).apply();
         }
 
+        getLoaderManager().restartLoader(MOVIE_LOADER, null, this);
         getActivity().invalidateOptionsMenu();
         return true;
 
@@ -160,19 +173,24 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        Uri uri = MovieContract.MovieEntry.CONTENT_URI;
+        Uri uri = MovieEntry.CONTENT_URI;
+        String[] columns = MOVIE_COLUMNS;
         String sortOrder = prefs.getString(prefSortOrderKey, prefValueMostPopular);
 
-        String cursorSortOrder = MovieContract.MovieEntry.COLUMN_POPULARITY + " DESC";
+        String cursorSortOrder = MovieEntry.COLUMN_POPULARITY + " DESC";
         if (sortOrder.equals(prefValueMostPopular)) {
-            cursorSortOrder = MovieContract.MovieEntry.COLUMN_POPULARITY + " DESC";
+            cursorSortOrder = MovieEntry.COLUMN_POPULARITY + " DESC";
         } else if (sortOrder.equals(prefValueHighestRated)) {
-            cursorSortOrder = MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE + " DESC";
+            cursorSortOrder = MovieEntry.COLUMN_VOTE_AVERAGE + " DESC";
+        } else if (sortOrder.equals(prefValueFavorite)) {
+            uri = FavoriteEntry.CONTENT_URI;
+            columns = FAVORITE_COLUMNS;
+            cursorSortOrder = null;
         }
 
         return new CursorLoader(getActivity(),
                 uri,
-                MOVIE_COLUMNS,
+                columns,
                 null,
                 null,
                 cursorSortOrder);

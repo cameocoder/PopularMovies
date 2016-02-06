@@ -38,9 +38,9 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.TrailerI
     }
 
     public void fetchVideos() {
-        MovieService movieService = RetrofitMovieService.createMovieService();
+        RetrofitMovieInterface retrofitMovieInterface = RetrofitMovieService.createMovieService();
 
-        Call<Videos> videos = movieService.getVideos(movieId, BuildConfig.OPEN_MOVIE_DB_API_KEY);
+        Call<Videos> videos = retrofitMovieInterface.getVideos(movieId, BuildConfig.OPEN_MOVIE_DB_API_KEY);
         videos.enqueue(new Callback<Videos>() {
             @Override
             public void onResponse(Response<Videos> response, Retrofit retrofit) {

@@ -9,7 +9,7 @@ import retrofit.http.GET;
 import retrofit.http.Path;
 import retrofit.http.Query;
 
-public interface MovieService {
+public interface RetrofitMovieInterface {
     @GET("/3/discover/movie")
     Call<Movies> discoverMovies(@Query("sort_by") String sort, @Query("api_key") String api_key);
 

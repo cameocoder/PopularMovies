@@ -182,9 +182,9 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     }
 
     public void fetchReviews() {
-        MovieService movieService = RetrofitMovieService.createMovieService();
+        RetrofitMovieInterface retrofitMovieInterface = RetrofitMovieService.createMovieService();
 
-        Call<Reviews> reviews = movieService.getReviews(movieId, BuildConfig.OPEN_MOVIE_DB_API_KEY);
+        Call<Reviews> reviews = retrofitMovieInterface.getReviews(movieId, BuildConfig.OPEN_MOVIE_DB_API_KEY);
         reviews.enqueue(new Callback<Reviews>() {
             @Override
             public void onResponse(Response<Reviews> response, Retrofit retrofit) {
