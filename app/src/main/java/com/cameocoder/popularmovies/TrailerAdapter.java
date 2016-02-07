@@ -3,6 +3,7 @@ package com.cameocoder.popularmovies;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -59,6 +60,13 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.TrailerI
         });
     }
 
+    public String getFirstTrailerUrl() {
+        if (!trailers.isEmpty()) {
+            return getTrailerUriString(trailers.get(0));
+        }
+        return null;
+    }
+
     private void addTrailers(List<VideoResult> trailers) {
         this.trailers.addAll(trailers);
         notifyDataSetChanged();
@@ -79,15 +87,21 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.TrailerI
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?v=" + currentTrailer.getKey())));
+                activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(getTrailerUriString(currentTrailer))));
             }
         });
+    }
+
+    @NonNull
+    private String getTrailerUriString(VideoResult currentTrailer) {
+        return activity.getString(R.string.youtube_trailer_base_url) + currentTrailer.getKey();
     }
 
     @Override
     public int getItemCount() {
         return trailers.size();
     }
+
 
     public class TrailerItemHolder extends RecyclerView.ViewHolder {
         @Bind(R.id.trailer_title)

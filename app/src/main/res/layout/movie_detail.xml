@@ -51,13 +51,13 @@
                     android:textStyle="bold"
                     tools:text="8.1/10" />
 
-                <ToggleButton
+                <ImageButton
                     android:id="@+id/button_favorite"
                     android:layout_width="@dimen/favorite_button_width"
-                    android:layout_height="wrap_content"
-                    android:textOff="@string/mark_as_favorite"
-                    android:textOn="@string/remove_as_favorite"
-                    android:checked="false"/>
+                    android:layout_height="@dimen/favorite_button_width"
+                    android:contentDescription="@string/mark_as_favorite"
+                    android:src="@drawable/ic_favorite_button"
+                    android:background="@android:color/transparent"/>
             </LinearLayout>
         </LinearLayout>
 

@@ -1,13 +1,14 @@
 package com.cameocoder.popularmovies;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -17,27 +18,22 @@ import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.ToggleButton;
 
 import com.cameocoder.popularmovies.data.MovieContract.FavoriteEntry;
 import com.cameocoder.popularmovies.data.MovieContract.MovieEntry;
-import com.cameocoder.popularmovies.model.ReviewResult;
-import com.cameocoder.popularmovies.model.Reviews;
 import com.squareup.picasso.Picasso;
-
-import java.util.List;
 
 import butterknife.Bind;
 import butterknife.BindString;
 import butterknife.ButterKnife;
-import retrofit.Call;
-import retrofit.Callback;
-import retrofit.Response;
-import retrofit.Retrofit;
 
 /**
  * A fragment representing a single MovieItem detail screen.
@@ -84,7 +80,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     @Bind(R.id.detail_overview)
     TextView detailOverview;
     @Bind(R.id.button_favorite)
-    ToggleButton favoriteButton;
+    ImageButton favoriteButton;
 
     @Bind(R.id.trailer_list)
     RecyclerView trailerList;
@@ -94,8 +90,12 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     @BindString(R.string.rating_format)
     String ratingFormat;
 
+    TrailerAdapter trailerAdapter;
+    ReviewAdapter reviewAdapter;
+
     private int movieId;
     private boolean isFavorite;
+    private String shareUrl;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -108,17 +108,12 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setHasOptionsMenu(true);
         if (getArguments().containsKey(ARG_MOVIE_ID)) {
             movieId = getArguments().getInt(ARG_MOVIE_ID);
 
-            Activity activity = this.getActivity();
-            CollapsingToolbarLayout appBarLayout = (CollapsingToolbarLayout) activity.findViewById(R.id.toolbar_layout);
-            if (appBarLayout != null) {
-//                appBarLayout.setTitle(movie.getTitle());
-            }
             getLoaderManager().initLoader(DETAIL_LOADER, null, this);
             getLoaderManager().initLoader(FAVORITE_LOADER, null, this);
-            fetchReviews();
         }
     }
 
@@ -130,13 +125,13 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
 
         trailerList.setHasFixedSize(true);
         trailerList.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, true));
-        TrailerAdapter trailerAdapter = new TrailerAdapter(getActivity(), movieId);
+        trailerAdapter = new TrailerAdapter(getActivity(), movieId);
         trailerList.setAdapter(trailerAdapter);
         trailerAdapter.fetchVideos();
 
         reviewList.setHasFixedSize(true);
         reviewList.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, true));
-        ReviewAdapter reviewAdapter = new ReviewAdapter(getActivity(), movieId);
+        reviewAdapter = new ReviewAdapter(getActivity(), movieId);
         reviewList.setAdapter(reviewAdapter);
         reviewAdapter.fetchReviews();
 
@@ -149,6 +144,38 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         });
 
         return rootView;
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.menu_details, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.action_share) {
+            String shareUrl = trailerAdapter.getFirstTrailerUrl();
+            if (shareUrl != null) {
+                Intent share = new Intent(android.content.Intent.ACTION_SEND);
+                share.setType("text/plain");
+                share.putExtra(Intent.EXTRA_SUBJECT, getContext().getString(R.string.send_trailer_subject));
+                share.putExtra(Intent.EXTRA_TEXT, shareUrl);
+                startActivity(Intent.createChooser(share, getContext().getString(R.string.share_chooser_title)));
+            }
+        }
+
+        return true;
+    }
+
+    private void setTitle(String title) {
+        Activity activity = this.getActivity();
+        ActionBar actionbar = activity.getActionBar();
+        if (actionbar != null) {
+            actionbar.setTitle(title);
+        }
     }
 
     private void handleFavoriteButtonClick() {
@@ -170,7 +197,12 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     }
 
     private void updateFavoriteButton(boolean favorite) {
-            favoriteButton.setChecked(favorite);
+        favoriteButton.setSelected(favorite);
+        if (favorite) {
+            favoriteButton.setContentDescription(getContext().getString(R.string.remove_as_favorite));
+        } else {
+            favoriteButton.setContentDescription(getContext().getString(R.string.mark_as_favorite));
+        }
     }
 
     private String getReleaseYear(String date) {
@@ -179,29 +211,6 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         } else {
             return getString(R.string.unknown_release_year);
         }
-    }
-
-    public void fetchReviews() {
-        RetrofitMovieInterface retrofitMovieInterface = RetrofitMovieService.createMovieService();
-
-        Call<Reviews> reviews = retrofitMovieInterface.getReviews(movieId, BuildConfig.OPEN_MOVIE_DB_API_KEY);
-        reviews.enqueue(new Callback<Reviews>() {
-            @Override
-            public void onResponse(Response<Reviews> response, Retrofit retrofit) {
-                if (response != null && response.body() != null) {
-                    List<ReviewResult> results = response.body().getReviewResults();
-                    Log.d(LOG_TAG, "Movie Response: " + results.size());
-                }
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                // Ignore for now
-                if (t.getMessage() != null) {
-                    Log.e(LOG_TAG, "Unable to parse review response: " + t.getMessage());
-                }
-            }
-        });
     }
 
     @Override
@@ -243,8 +252,11 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
 
                     Picasso.with(getActivity()).load(posterUrl).placeholder(R.drawable.ic_film_strip_128dp).error(R.drawable.ic_film_strip_128dp).into(detailPoster);
 
+                    String title = data.getString(data.getColumnIndex(MovieEntry.COLUMN_TITLE));
+                    setTitle(title);
                     if (detailTitle != null) {
-                        detailTitle.setText(data.getString(data.getColumnIndex(MovieEntry.COLUMN_TITLE)));
+                        detailTitle.setText(title);
+
                     }
                     String releaseYear = getReleaseYear(data.getString(data.getColumnIndex(MovieEntry.COLUMN_RELEASE_DATE)));
                     detailYear.setText(releaseYear);
@@ -260,13 +272,12 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
             }
 
             case FAVORITE_LOADER: {
+                isFavorite = false;
                 if (data != null && data.moveToFirst()) {
                     final int movieId = data.getInt(data.getColumnIndex(FavoriteEntry.COLUMN_ID));
                     if (movieId == this.movieId) {
                         isFavorite = true;
                     }
-                } else {
-                    isFavorite = false;
                 }
                 updateFavoriteButton(isFavorite);
                 Log.d(LOG_TAG, "Favorite = " + isFavorite);
