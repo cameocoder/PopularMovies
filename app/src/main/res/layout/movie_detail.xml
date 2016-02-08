@@ -83,7 +83,7 @@
         <include
             layout="@layout/trailer_list"
             android:layout_width="match_parent"
-            android:layout_height="100dp" />
+            android:layout_height="wrap_content" />
 
         <View
             android:layout_width="match_parent"
@@ -99,7 +99,7 @@
         <include
             layout="@layout/review_list"
             android:layout_width="match_parent"
-            android:layout_height="100dp" />
+            android:layout_height="wrap_content" />
     </LinearLayout>
 
 </ScrollView>

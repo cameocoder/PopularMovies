@@ -23,6 +23,8 @@ import com.cameocoder.popularmovies.RetrofitMovieService;
 import com.cameocoder.popularmovies.data.MovieContract;
 import com.cameocoder.popularmovies.model.Movie;
 import com.cameocoder.popularmovies.model.Movies;
+import com.cameocoder.popularmovies.model.VideoResult;
+import com.cameocoder.popularmovies.model.Videos;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +38,13 @@ import retrofit.Retrofit;
 public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     public final String LOG_TAG = MovieSyncAdapter.class.getSimpleName();
 
+    private static final String ARG_SYNC_TYPE = "syncType";
+    private static final String ARG_MOVIE_ID = "movieId";
+
+    private static final int MOVIES = 0;
+    private static final int TRAILERS = 1;
+    private static final int REVIEWS = 1;
+
     // Interval at which to sync movies, in seconds.
     // 60 seconds (1 minute) * 180 = 3 hours
     public static final int SYNC_INTERVAL = 60 * 180;
@@ -48,7 +57,21 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
 
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
-        fetchMovies(getContext());
+        final int syncType = extras.getInt(ARG_SYNC_TYPE, MOVIES);
+        if (syncType == MOVIES) {
+            fetchMovies(getContext());
+        } else if (syncType == TRAILERS) {
+            final int movieId = extras.getInt(ARG_MOVIE_ID);
+            if (movieId != 0) {
+                fetchTrailers(movieId);
+            }
+        } else if (syncType == REVIEWS) {
+            final int movieId = extras.getInt(ARG_MOVIE_ID);
+            if (movieId != 0) {
+//                fetchTrailers(movieId);
+            }
+        }
+
     }
 
     public void fetchMovies(Context context) {
@@ -99,6 +122,53 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
 
     }
 
+    public void fetchTrailers(final int movieId) {
+        RetrofitMovieInterface retrofitMovieInterface = RetrofitMovieService.createMovieService();
+
+        Call<Videos> videos = retrofitMovieInterface.getVideos(movieId, BuildConfig.OPEN_MOVIE_DB_API_KEY);
+        videos.enqueue(new Callback<Videos>() {
+            @Override
+            public void onResponse(Response<Videos> response, Retrofit retrofit) {
+                if (response != null && response.body() != null) {
+                    addVideos(movieId, response.body().getResults());
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                // Ignore for now
+                if (t.getMessage() != null) {
+                    Log.e(LOG_TAG, "Unable to parse video response: " + t.getMessage());
+                }
+            }
+        });
+    }
+
+    private void addVideos(int movieId, List<VideoResult> videos) {
+        ArrayList<ContentValues> contentValues = new ArrayList<>();
+        for (int i = 0; i < videos.size(); i++) {
+            VideoResult video = videos.get(i);
+            ContentValues contentValue = new ContentValues();
+            contentValue.put(MovieContract.TrailerEntry.COLUMN_MOVIE_ID, movieId);
+            contentValue.put(MovieContract.TrailerEntry.COLUMN_ID, video.getId());
+            contentValue.put(MovieContract.TrailerEntry.COLUMN_ISO, video.getIso6391());
+            contentValue.put(MovieContract.TrailerEntry.COLUMN_KEY, video.getKey());
+            contentValue.put(MovieContract.TrailerEntry.COLUMN_NAME, video.getName());
+            contentValue.put(MovieContract.TrailerEntry.COLUMN_SITE, video.getSite());
+            contentValue.put(MovieContract.TrailerEntry.COLUMN_SIZE, video.getSize());
+            contentValue.put(MovieContract.TrailerEntry.COLUMN_TYPE, video.getType());
+            contentValues.add(contentValue);
+        }
+
+        ContentValues[] contentValuesArray = new ContentValues[contentValues.size()];
+        contentValues.toArray(contentValuesArray);
+
+        int itemsAdded = getContext().getContentResolver().bulkInsert(MovieContract.TrailerEntry.CONTENT_URI, contentValuesArray);
+        Log.d(LOG_TAG, itemsAdded + "/" + contentValuesArray.length + " videos added to database");
+
+    }
+
+
     @NonNull
     private String getSortOrder(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
@@ -107,15 +177,47 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     /**
-     * Helper method to have the sync adapter sync immediately
+     * Helper method to have the sync adapter sync movies immediately
      *
      * @param context The context used to access the account service
      */
-    public static void syncImmediately(Context context) {
+    public static void syncMovies(Context context) {
         Bundle bundle = new Bundle();
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+        bundle.putInt(ARG_SYNC_TYPE, MOVIES);
         ContentResolver.requestSync(getSyncAccount(context),
+                context.getString(R.string.content_authority), bundle);
+    }
+
+    /**
+     * Helper method to have the sync adapter sync trailers immediately
+     *
+     * @param context The context used to access the account service
+     */
+    public static void syncTrailers(Context context, int movieId) {
+        Bundle bundle = new Bundle();
+        bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+        bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+        bundle.putInt(ARG_SYNC_TYPE, TRAILERS);
+        bundle.putInt(ARG_MOVIE_ID, movieId);
+        ContentResolver.requestSync(getSyncAccount(context),
+                context.getString(R.string.content_authority), bundle);
+    }
+
+    /**
+     * Helper method to have the sync adapter sync trailers immediately
+     *
+     * @param context The context used to access the account service
+     */
+    public static void syncReviews(Context context, int movieId) {
+        Bundle bundle = new Bundle();
+        bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+        bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+        bundle.putInt(ARG_SYNC_TYPE, REVIEWS);
+        bundle.putInt(ARG_MOVIE_ID, movieId);
+        Account account = getSyncAccount(context);
+        ContentResolver.requestSync(account,
                 context.getString(R.string.content_authority), bundle);
     }
 
@@ -191,7 +293,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         /*
          * Finally, let's do a sync to get things started
          */
-        syncImmediately(context);
+        syncMovies(context);
     }
 
     public static void initializeSyncAdapter(Context context) {

@@ -7,11 +7,12 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import com.cameocoder.popularmovies.data.MovieContract.FavoriteEntry;
 import com.cameocoder.popularmovies.data.MovieContract.MovieEntry;
+import com.cameocoder.popularmovies.data.MovieContract.TrailerEntry;
 
 public class MovieDbHelper extends SQLiteOpenHelper {
 
     // If you change the database schema, you must increment the database version.
-    private static final int DATABASE_VERSION = 6;
+    private static final int DATABASE_VERSION = 9;
 
     static final String DATABASE_NAME = "movies.db";
 
@@ -51,8 +52,27 @@ public class MovieDbHelper extends SQLiteOpenHelper {
                 // per location, it's created a UNIQUE constraint with REPLACE strategy
                 " UNIQUE (" + FavoriteEntry.COLUMN_ID + ") ON CONFLICT REPLACE);";
 
+        final String SQL_CREATE_TRAILER_TABLE = "CREATE TABLE "+ TrailerEntry.TABLE_NAME + " (" +
+                TrailerEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                TrailerEntry.COLUMN_MOVIE_ID + " INTEGER NOT NULL, " +
+                TrailerEntry.COLUMN_ID + " INTEGER NOT NULL, " +
+                TrailerEntry.COLUMN_ISO + " TEXT, " +
+                TrailerEntry.COLUMN_KEY + " TEXT, " +
+                TrailerEntry.COLUMN_NAME + " TEXT, " +
+                TrailerEntry.COLUMN_SITE + " TEXT, " +
+                TrailerEntry.COLUMN_SIZE + " INTEGER, " +
+                TrailerEntry.COLUMN_TYPE + " TEXT, " +
+
+                " FOREIGN KEY (" + TrailerEntry.COLUMN_MOVIE_ID + ") REFERENCES " +
+                MovieEntry.TABLE_NAME + " (" + MovieEntry.COLUMN_ID + "), " +
+
+                // To assure the application have just one weather entry per day
+                // per location, it's created a UNIQUE constraint with REPLACE strategy
+                " UNIQUE (" + TrailerEntry.COLUMN_ID + ") ON CONFLICT REPLACE);";
+
         db.execSQL(SQL_CREATE_MOVIE_TABLE);
         db.execSQL(SQL_CREATE_FAVORITE_TABLE);
+        db.execSQL(SQL_CREATE_TRAILER_TABLE);
 
     }
 
@@ -66,6 +86,7 @@ public class MovieDbHelper extends SQLiteOpenHelper {
         // should be your top priority before modifying this method.
         db.execSQL("DROP TABLE IF EXISTS " + MovieEntry.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + FavoriteEntry.TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + TrailerEntry.TABLE_NAME);
         onCreate(db);
 
     }

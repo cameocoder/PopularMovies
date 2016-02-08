@@ -84,7 +84,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
-        MovieSyncAdapter.syncImmediately(getContext());
+        MovieSyncAdapter.syncMovies(getContext());
         prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
     }
 

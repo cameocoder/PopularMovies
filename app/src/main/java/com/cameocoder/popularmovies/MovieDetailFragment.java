@@ -25,11 +25,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.cameocoder.popularmovies.data.MovieContract.FavoriteEntry;
 import com.cameocoder.popularmovies.data.MovieContract.MovieEntry;
+import com.cameocoder.popularmovies.data.MovieContract.TrailerEntry;
+import com.cameocoder.popularmovies.sync.MovieSyncAdapter;
 import com.squareup.picasso.Picasso;
+
+import org.solovyev.android.views.llm.DividerItemDecoration;
 
 import butterknife.Bind;
 import butterknife.BindString;
@@ -54,6 +59,8 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
 
     public static final int DETAIL_LOADER = 2;
     public static final int FAVORITE_LOADER = 3;
+    public static final int TRAILER_LOADER = 4;
+    public static final int REVIEWS_LOADER = 5;
 
     public static final String[] MOVIE_COLUMNS = {
             MovieEntry.COLUMN_ID,
@@ -66,6 +73,16 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
 
     public static final String[] FAVORITE_COLUMNS = {
             FavoriteEntry.TABLE_NAME + "." + FavoriteEntry.COLUMN_ID
+    };
+
+    public static final String[] TRAILER_COLUMNS = {
+            TrailerEntry.COLUMN_ID,
+            TrailerEntry.COLUMN_MOVIE_ID,
+            TrailerEntry.COLUMN_NAME,
+            TrailerEntry.COLUMN_SITE,
+            TrailerEntry.COLUMN_SIZE,
+            TrailerEntry.COLUMN_KEY,
+            TrailerEntry.COLUMN_TYPE
     };
 
     @Nullable
@@ -82,6 +99,8 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     @Bind(R.id.button_favorite)
     ImageButton favoriteButton;
 
+    @Bind(R.id.trailer_layout)
+    LinearLayout trailerLayout;
     @Bind(R.id.trailer_list)
     RecyclerView trailerList;
     @Bind(R.id.review_list)
@@ -95,7 +114,6 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
 
     private int movieId;
     private boolean isFavorite;
-    private String shareUrl;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -112,8 +130,11 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         if (getArguments().containsKey(ARG_MOVIE_ID)) {
             movieId = getArguments().getInt(ARG_MOVIE_ID);
 
+            MovieSyncAdapter.syncTrailers(getActivity(), movieId);
+            MovieSyncAdapter.syncReviews(getActivity(), movieId);
             getLoaderManager().initLoader(DETAIL_LOADER, null, this);
             getLoaderManager().initLoader(FAVORITE_LOADER, null, this);
+            getLoaderManager().initLoader(TRAILER_LOADER, null, this);
         }
     }
 
@@ -124,13 +145,15 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         ButterKnife.bind(this, rootView);
 
         trailerList.setHasFixedSize(true);
-        trailerList.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, true));
+        trailerList.setLayoutManager(new org.solovyev.android.views.llm.LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, true));
+        trailerList.addItemDecoration(new DividerItemDecoration(getContext(), null, false, false));
         trailerAdapter = new TrailerAdapter(getActivity(), movieId);
         trailerList.setAdapter(trailerAdapter);
         trailerAdapter.fetchVideos();
 
         reviewList.setHasFixedSize(true);
-        reviewList.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, true));
+        reviewList.setLayoutManager(new org.solovyev.android.views.llm.LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, true));
+        reviewList.addItemDecoration(new DividerItemDecoration(getContext(), null, false, false));
         reviewAdapter = new ReviewAdapter(getActivity(), movieId);
         reviewList.setAdapter(reviewAdapter);
         reviewAdapter.fetchReviews();
@@ -225,7 +248,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                         null,
                         null);
             }
-            case FAVORITE_LOADER:
+            case FAVORITE_LOADER: {
                 Uri uri = FavoriteEntry.buildFavoriteWithId(movieId);
                 return new CursorLoader(getActivity(),
                         uri,
@@ -233,6 +256,16 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                         null,
                         null,
                         null);
+            }
+            case TRAILER_LOADER: {
+                Uri uri = TrailerEntry.buildTrailerWithMovieId(movieId);
+                return new CursorLoader(getActivity(),
+                        uri,
+                        TRAILER_COLUMNS,
+                        null,
+                        null,
+                        null);
+            }
         }
         return null;
     }
@@ -266,7 +299,6 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                     detailRating.setText(String.format(ratingFormat, voteAverage));
 
                     detailOverview.setText(data.getString(data.getColumnIndex(MovieEntry.COLUMN_OVERVIEW)));
-
                 }
                 break;
             }
@@ -282,6 +314,16 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                 updateFavoriteButton(isFavorite);
                 Log.d(LOG_TAG, "Favorite = " + isFavorite);
                 break;
+            }
+            case TRAILER_LOADER: {
+                if (data != null && data.moveToFirst()) {
+                    final int id = data.getInt(data.getColumnIndex(TrailerEntry.COLUMN_ID));
+                    final int movieId = data.getInt(data.getColumnIndex(TrailerEntry.COLUMN_MOVIE_ID));
+                    final String name = data.getString(data.getColumnIndex(TrailerEntry.COLUMN_NAME));
+                    final String key = data.getString(data.getColumnIndex(TrailerEntry.COLUMN_KEY));
+                    Log.d(LOG_TAG, "id = " + id);
+                }
+
             }
 
         }
