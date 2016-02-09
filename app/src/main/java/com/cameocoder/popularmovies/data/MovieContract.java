@@ -134,9 +134,9 @@ public class MovieContract {
 
         public static final String COLUMN_MOVIE_ID = "movie_id";
         public static final String COLUMN_ID = "id";
-        public static final String COLUMN_ISO= "author";
-        public static final String COLUMN_KEY = "content";
-        public static final String COLUMN_NAME = "url";
+        public static final String COLUMN_AUTHOR= "author";
+        public static final String COLUMN_CONTENT = "content";
+        public static final String COLUMN_URL = "url";
 
 
         public static Uri buildReviewWithMovieId(long id) {

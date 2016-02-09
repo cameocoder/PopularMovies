@@ -21,8 +21,12 @@ import com.cameocoder.popularmovies.RetrofitMovieInterface;
 import com.cameocoder.popularmovies.R;
 import com.cameocoder.popularmovies.RetrofitMovieService;
 import com.cameocoder.popularmovies.data.MovieContract;
+import com.cameocoder.popularmovies.data.MovieContract.ReviewEntry;
+import com.cameocoder.popularmovies.data.MovieContract.TrailerEntry;
 import com.cameocoder.popularmovies.model.Movie;
 import com.cameocoder.popularmovies.model.Movies;
+import com.cameocoder.popularmovies.model.ReviewResult;
+import com.cameocoder.popularmovies.model.Reviews;
 import com.cameocoder.popularmovies.model.VideoResult;
 import com.cameocoder.popularmovies.model.Videos;
 
@@ -43,7 +47,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
 
     private static final int MOVIES = 0;
     private static final int TRAILERS = 1;
-    private static final int REVIEWS = 1;
+    private static final int REVIEWS = 2;
 
     // Interval at which to sync movies, in seconds.
     // 60 seconds (1 minute) * 180 = 3 hours
@@ -68,7 +72,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         } else if (syncType == REVIEWS) {
             final int movieId = extras.getInt(ARG_MOVIE_ID);
             if (movieId != 0) {
-//                fetchTrailers(movieId);
+                fetchReviews(movieId);
             }
         }
 
@@ -119,7 +123,6 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
 
         int itemsAdded = getContext().getContentResolver().bulkInsert(MovieContract.MovieEntry.CONTENT_URI, contentValuesArray);
         Log.d(LOG_TAG, itemsAdded + "/" + contentValuesArray.length + " movies added to database");
-
     }
 
     public void fetchTrailers(final int movieId) {
@@ -149,25 +152,65 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         for (int i = 0; i < videos.size(); i++) {
             VideoResult video = videos.get(i);
             ContentValues contentValue = new ContentValues();
-            contentValue.put(MovieContract.TrailerEntry.COLUMN_MOVIE_ID, movieId);
-            contentValue.put(MovieContract.TrailerEntry.COLUMN_ID, video.getId());
-            contentValue.put(MovieContract.TrailerEntry.COLUMN_ISO, video.getIso6391());
-            contentValue.put(MovieContract.TrailerEntry.COLUMN_KEY, video.getKey());
-            contentValue.put(MovieContract.TrailerEntry.COLUMN_NAME, video.getName());
-            contentValue.put(MovieContract.TrailerEntry.COLUMN_SITE, video.getSite());
-            contentValue.put(MovieContract.TrailerEntry.COLUMN_SIZE, video.getSize());
-            contentValue.put(MovieContract.TrailerEntry.COLUMN_TYPE, video.getType());
+            contentValue.put(TrailerEntry.COLUMN_MOVIE_ID, movieId);
+            contentValue.put(TrailerEntry.COLUMN_ID, video.getId());
+            contentValue.put(TrailerEntry.COLUMN_ISO, video.getIso6391());
+            contentValue.put(TrailerEntry.COLUMN_KEY, video.getKey());
+            contentValue.put(TrailerEntry.COLUMN_NAME, video.getName());
+            contentValue.put(TrailerEntry.COLUMN_SITE, video.getSite());
+            contentValue.put(TrailerEntry.COLUMN_SIZE, video.getSize());
+            contentValue.put(TrailerEntry.COLUMN_TYPE, video.getType());
             contentValues.add(contentValue);
         }
 
         ContentValues[] contentValuesArray = new ContentValues[contentValues.size()];
         contentValues.toArray(contentValuesArray);
 
-        int itemsAdded = getContext().getContentResolver().bulkInsert(MovieContract.TrailerEntry.CONTENT_URI, contentValuesArray);
+        int itemsAdded = getContext().getContentResolver().bulkInsert(TrailerEntry.CONTENT_URI, contentValuesArray);
         Log.d(LOG_TAG, itemsAdded + "/" + contentValuesArray.length + " videos added to database");
-
     }
 
+    public void fetchReviews(final int movieId) {
+        RetrofitMovieInterface retrofitMovieInterface = RetrofitMovieService.createMovieService();
+
+        Call<Reviews> reviews = retrofitMovieInterface.getReviews(movieId, BuildConfig.OPEN_MOVIE_DB_API_KEY);
+        reviews.enqueue(new Callback<Reviews>() {
+            @Override
+            public void onResponse(Response<Reviews> response, Retrofit retrofit) {
+                if (response != null && response.body() != null) {
+                    addReviews(movieId, response.body().getReviewResults());
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                // Ignore for now
+                if (t.getMessage() != null) {
+                    Log.e(LOG_TAG, "Unable to parse review response: " + t.getMessage());
+                }
+            }
+        });
+    }
+
+    private void addReviews(int movieId, List<ReviewResult> reviews) {
+        ArrayList<ContentValues> contentValues = new ArrayList<>();
+        for (int i = 0; i < reviews.size(); i++) {
+            ReviewResult review = reviews.get(i);
+            ContentValues contentValue = new ContentValues();
+            contentValue.put(ReviewEntry.COLUMN_MOVIE_ID, movieId);
+            contentValue.put(ReviewEntry.COLUMN_ID, review.getId());
+            contentValue.put(ReviewEntry.COLUMN_AUTHOR, review.getAuthor());
+            contentValue.put(ReviewEntry.COLUMN_CONTENT, review.getContent());
+            contentValue.put(ReviewEntry.COLUMN_URL, review.getUrl());
+            contentValues.add(contentValue);
+        }
+
+        ContentValues[] contentValuesArray = new ContentValues[contentValues.size()];
+        contentValues.toArray(contentValuesArray);
+
+        int itemsAdded = getContext().getContentResolver().bulkInsert(ReviewEntry.CONTENT_URI, contentValuesArray);
+        Log.d(LOG_TAG, itemsAdded + "/" + contentValuesArray.length + " reviews added to database");
+    }
 
     @NonNull
     private String getSortOrder(Context context) {

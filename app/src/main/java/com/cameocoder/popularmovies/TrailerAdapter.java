@@ -2,74 +2,43 @@ package com.cameocoder.popularmovies;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.cameocoder.popularmovies.model.VideoResult;
-import com.cameocoder.popularmovies.model.Videos;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.cameocoder.popularmovies.data.MovieContract.TrailerEntry;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import retrofit.Call;
-import retrofit.Callback;
-import retrofit.Response;
-import retrofit.Retrofit;
 
 public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.TrailerItemHolder> {
 
     public final String LOG_TAG = TrailerAdapter.class.getSimpleName();
 
     private Activity activity;
-    private int movieId;
+    Cursor cursor;
 
-    List<VideoResult> trailers = new ArrayList<>();
-
-    public TrailerAdapter(Activity activity, int movieId) {
+    public TrailerAdapter(Activity activity) {
         this.activity = activity;
-        this.movieId = movieId;
     }
 
-    public void fetchVideos() {
-        RetrofitMovieInterface retrofitMovieInterface = RetrofitMovieService.createMovieService();
-
-        Call<Videos> videos = retrofitMovieInterface.getVideos(movieId, BuildConfig.OPEN_MOVIE_DB_API_KEY);
-        videos.enqueue(new Callback<Videos>() {
-            @Override
-            public void onResponse(Response<Videos> response, Retrofit retrofit) {
-                if (response != null && response.body() != null) {
-                    addTrailers(response.body().getResults());
-                }
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                // Ignore for now
-                if (t.getMessage() != null) {
-                    Log.e(LOG_TAG, "Unable to parse video response: " + t.getMessage());
-                }
-            }
-        });
+    public void swapCursor(Cursor cursor) {
+        this.cursor = cursor;
+        notifyDataSetChanged();
     }
+
 
     public String getFirstTrailerUrl() {
-        if (!trailers.isEmpty()) {
-            return getTrailerUriString(trailers.get(0));
+        if (cursor != null && cursor.moveToFirst()) {
+            final String key = cursor.getString(cursor.getColumnIndex(TrailerEntry.COLUMN_KEY));
+            return getTrailerUriString(key);
         }
         return null;
-    }
-
-    private void addTrailers(List<VideoResult> trailers) {
-        this.trailers.addAll(trailers);
-        notifyDataSetChanged();
     }
 
     @Override
@@ -81,25 +50,32 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.TrailerI
 
     @Override
     public void onBindViewHolder(final TrailerItemHolder holder, int position) {
-        final VideoResult currentTrailer = trailers.get(position);
-        holder.trailerTitle.setText(currentTrailer.getName());
+        cursor.moveToPosition(position);
+
+        final String name = cursor.getString(cursor.getColumnIndex(TrailerEntry.COLUMN_NAME));
+        final String key = cursor.getString(cursor.getColumnIndex(TrailerEntry.COLUMN_KEY));
+        holder.trailerTitle.setText(name);
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(getTrailerUriString(currentTrailer))));
+                activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(getTrailerUriString(key))));
             }
         });
     }
 
     @NonNull
-    private String getTrailerUriString(VideoResult currentTrailer) {
-        return activity.getString(R.string.youtube_trailer_base_url) + currentTrailer.getKey();
+    private String getTrailerUriString(String key) {
+        return activity.getString(R.string.youtube_trailer_base_url) + key;
     }
 
     @Override
     public int getItemCount() {
-        return trailers.size();
+        if (cursor != null) {
+            return cursor.getCount();
+        } else {
+            return 0;
+        }
     }
 
 

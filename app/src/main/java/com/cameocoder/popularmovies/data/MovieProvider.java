@@ -13,6 +13,7 @@ import android.support.annotation.Nullable;
 
 import com.cameocoder.popularmovies.data.MovieContract.FavoriteEntry;
 import com.cameocoder.popularmovies.data.MovieContract.MovieEntry;
+import com.cameocoder.popularmovies.data.MovieContract.ReviewEntry;
 import com.cameocoder.popularmovies.data.MovieContract.TrailerEntry;
 
 public class MovieProvider extends ContentProvider {
@@ -33,6 +34,7 @@ public class MovieProvider extends ContentProvider {
     private static final SQLiteQueryBuilder movieByIdQueryBuilder;
     private static final SQLiteQueryBuilder favoriteByIdQueryBuilder;
     private static final SQLiteQueryBuilder trailerByMovieIdQueryBuilder;
+    private static final SQLiteQueryBuilder reviewByMovieIdQueryBuilder;
 
     static {
         movieByIdQueryBuilder = new SQLiteQueryBuilder();
@@ -48,6 +50,8 @@ public class MovieProvider extends ContentProvider {
 
         trailerByMovieIdQueryBuilder = new SQLiteQueryBuilder();
         trailerByMovieIdQueryBuilder.setTables(TrailerEntry.TABLE_NAME);
+        reviewByMovieIdQueryBuilder = new SQLiteQueryBuilder();
+        reviewByMovieIdQueryBuilder.setTables(ReviewEntry.TABLE_NAME);
     }
 
     private static final String movieIdSelection = MovieEntry.TABLE_NAME + "."
@@ -123,6 +127,17 @@ public class MovieProvider extends ContentProvider {
         );
     }
 
+    private Cursor getReviewByMovieID(Uri uri, String[] projection, String sortOrder) {
+        String movie_id = ReviewEntry.getReviewIDFromUri(uri);
+        return trailerByMovieIdQueryBuilder.query(mOpenHelper.getReadableDatabase(),
+                projection,
+                trailerByMovieIdSelection,
+                new String[] { movie_id },
+                null,
+                null,
+                sortOrder
+        );
+    }
     @Override
     public boolean onCreate() {
         mOpenHelper = new MovieDbHelper(getContext());
@@ -148,9 +163,9 @@ public class MovieProvider extends ContentProvider {
             case TRAILERS_WITH_MOVIE_ID:
                 return TrailerEntry.CONTENT_ITEM_TYPE;
             case REVIEWS:
-                return TrailerEntry.CONTENT_ITEM_TYPE;
+                return ReviewEntry.CONTENT_ITEM_TYPE;
             case REVIEWS_WITH_MOVIE_ID:
-                return TrailerEntry.CONTENT_ITEM_TYPE;
+                return ReviewEntry.CONTENT_ITEM_TYPE;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -206,6 +221,22 @@ public class MovieProvider extends ContentProvider {
                 retCursor = getTrailerByMovieID(uri, projection, sortOrder);
                 break;
             }
+            case REVIEWS: {
+                retCursor = db.query(
+                        ReviewEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
+                break;
+            }
+            case REVIEWS_WITH_MOVIE_ID: {
+                retCursor = getReviewByMovieID(uri, projection, sortOrder);
+                break;
+            }
 
             default: {
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
@@ -242,7 +273,6 @@ public class MovieProvider extends ContentProvider {
                     throw new SQLException("Failed to insert row into " + uri);
                 break;
             }
-
             case TRAILERS: {
                 insertedId = db.insert(TrailerEntry.TABLE_NAME, null, values);
                 if (insertedId > 0)
@@ -251,7 +281,14 @@ public class MovieProvider extends ContentProvider {
                     throw new SQLException("Failed to insert row into " + uri);
                 break;
             }
-
+            case REVIEWS: {
+                insertedId = db.insert(ReviewEntry.TABLE_NAME, null, values);
+                if (insertedId > 0)
+                    returnUri = ReviewEntry.buildReviewWithMovieId(insertedId);
+                else
+                    throw new SQLException("Failed to insert row into " + uri);
+                break;
+            }
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -289,6 +326,11 @@ public class MovieProvider extends ContentProvider {
                         TrailerEntry.TABLE_NAME, selection, selectionArgs);
                 break;
             }
+            case REVIEWS: {
+                rowsDeleted = db.delete(
+                        ReviewEntry.TABLE_NAME, selection, selectionArgs);
+                break;
+            }
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -317,6 +359,11 @@ public class MovieProvider extends ContentProvider {
             }
             case TRAILERS: {
                 rowsUpdated = db.update(TrailerEntry.TABLE_NAME, values, selection,
+                        selectionArgs);
+                break;
+            }
+            case REVIEWS: {
+                rowsUpdated = db.update(ReviewEntry.TABLE_NAME, values, selection,
                         selectionArgs);
                 break;
             }
@@ -369,6 +416,23 @@ public class MovieProvider extends ContentProvider {
                 }
                 getContext().getContentResolver().notifyChange(uri, null);
                 return trailerCount;
+
+            case REVIEWS:
+                db.beginTransaction();
+                int reviewCount = 0;
+                try {
+                    for (ContentValues value : values) {
+                        long _id = db.insert(ReviewEntry.TABLE_NAME, null, value);
+                        if (_id != -1) {
+                            reviewCount++;
+                        }
+                    }
+                    db.setTransactionSuccessful();
+                } finally {
+                    db.endTransaction();
+                }
+                getContext().getContentResolver().notifyChange(uri, null);
+                return reviewCount;
 
 
             default:

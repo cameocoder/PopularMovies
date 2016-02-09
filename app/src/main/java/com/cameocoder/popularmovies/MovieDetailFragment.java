@@ -25,16 +25,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.cameocoder.popularmovies.data.MovieContract.FavoriteEntry;
 import com.cameocoder.popularmovies.data.MovieContract.MovieEntry;
+import com.cameocoder.popularmovies.data.MovieContract.ReviewEntry;
 import com.cameocoder.popularmovies.data.MovieContract.TrailerEntry;
 import com.cameocoder.popularmovies.sync.MovieSyncAdapter;
 import com.squareup.picasso.Picasso;
-
-import org.solovyev.android.views.llm.DividerItemDecoration;
 
 import butterknife.Bind;
 import butterknife.BindString;
@@ -60,7 +58,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     public static final int DETAIL_LOADER = 2;
     public static final int FAVORITE_LOADER = 3;
     public static final int TRAILER_LOADER = 4;
-    public static final int REVIEWS_LOADER = 5;
+    public static final int REVIEW_LOADER = 5;
 
     public static final String[] MOVIE_COLUMNS = {
             MovieEntry.COLUMN_ID,
@@ -85,6 +83,14 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
             TrailerEntry.COLUMN_TYPE
     };
 
+    public static final String[] REVIEW_COLUMNS = {
+            ReviewEntry.COLUMN_ID,
+            ReviewEntry.COLUMN_MOVIE_ID,
+            ReviewEntry.COLUMN_CONTENT,
+            ReviewEntry.COLUMN_AUTHOR,
+            ReviewEntry.COLUMN_URL
+    };
+
     @Nullable
     @Bind(R.id.detail_title)
     TextView detailTitle;
@@ -99,8 +105,6 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     @Bind(R.id.button_favorite)
     ImageButton favoriteButton;
 
-    @Bind(R.id.trailer_layout)
-    LinearLayout trailerLayout;
     @Bind(R.id.trailer_list)
     RecyclerView trailerList;
     @Bind(R.id.review_list)
@@ -114,6 +118,8 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
 
     private int movieId;
     private boolean isFavorite;
+
+    ViewGroup detailViewGroup;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -135,6 +141,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
             getLoaderManager().initLoader(DETAIL_LOADER, null, this);
             getLoaderManager().initLoader(FAVORITE_LOADER, null, this);
             getLoaderManager().initLoader(TRAILER_LOADER, null, this);
+            getLoaderManager().initLoader(REVIEW_LOADER, null, this);
         }
     }
 
@@ -144,19 +151,21 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         View rootView = inflater.inflate(R.layout.movie_detail, container, false);
         ButterKnife.bind(this, rootView);
 
+        detailViewGroup = container;
         trailerList.setHasFixedSize(true);
+        // Use this just to allow the use of wrap_content on the RecyclerView height
         trailerList.setLayoutManager(new org.solovyev.android.views.llm.LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, true));
-        trailerList.addItemDecoration(new DividerItemDecoration(getContext(), null, false, false));
-        trailerAdapter = new TrailerAdapter(getActivity(), movieId);
+        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL_LIST);
+        trailerList.addItemDecoration(dividerItemDecoration);
+
+        trailerAdapter = new TrailerAdapter(getActivity());
         trailerList.setAdapter(trailerAdapter);
-        trailerAdapter.fetchVideos();
 
         reviewList.setHasFixedSize(true);
         reviewList.setLayoutManager(new org.solovyev.android.views.llm.LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, true));
-        reviewList.addItemDecoration(new DividerItemDecoration(getContext(), null, false, false));
-        reviewAdapter = new ReviewAdapter(getActivity(), movieId);
+        reviewList.addItemDecoration(dividerItemDecoration);
+        reviewAdapter = new ReviewAdapter(getActivity());
         reviewList.setAdapter(reviewAdapter);
-        reviewAdapter.fetchReviews();
 
         favoriteButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -266,6 +275,15 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                         null,
                         null);
             }
+            case REVIEW_LOADER: {
+                Uri uri = ReviewEntry.buildReviewWithMovieId(movieId);
+                return new CursorLoader(getActivity(),
+                        uri,
+                        REVIEW_COLUMNS,
+                        null,
+                        null,
+                        null);
+            }
         }
         return null;
     }
@@ -322,8 +340,19 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                     final String name = data.getString(data.getColumnIndex(TrailerEntry.COLUMN_NAME));
                     final String key = data.getString(data.getColumnIndex(TrailerEntry.COLUMN_KEY));
                     Log.d(LOG_TAG, "id = " + id);
+                    trailerAdapter.swapCursor(data);
                 }
-
+                break;
+            }
+            case REVIEW_LOADER: {
+                if (data != null && data.moveToFirst()) {
+                    final int id = data.getInt(data.getColumnIndex(ReviewEntry.COLUMN_ID));
+                    final int movieId = data.getInt(data.getColumnIndex(ReviewEntry.COLUMN_MOVIE_ID));
+                    final String author = data.getString(data.getColumnIndex(ReviewEntry.COLUMN_AUTHOR));
+                    Log.d(LOG_TAG, "id = " + id);
+                    reviewAdapter.swapCursor(data);
+                }
+                break;
             }
 
         }

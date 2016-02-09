@@ -2,65 +2,32 @@ package com.cameocoder.popularmovies;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.cameocoder.popularmovies.model.ReviewResult;
-import com.cameocoder.popularmovies.model.Reviews;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.cameocoder.popularmovies.data.MovieContract.ReviewEntry;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import retrofit.Call;
-import retrofit.Callback;
-import retrofit.Response;
-import retrofit.Retrofit;
 
 public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewItemHolder> {
 
     public final String LOG_TAG = ReviewAdapter.class.getSimpleName();
 
     private Activity activity;
-    private int movieId;
+    Cursor cursor;
 
-    List<ReviewResult> reviews = new ArrayList<>();
-
-    public ReviewAdapter(Activity activity, int movieId) {
+    public ReviewAdapter(Activity activity) {
         this.activity = activity;
-        this.movieId = movieId;
     }
 
-    public void fetchReviews() {
-        RetrofitMovieInterface retrofitMovieInterface = RetrofitMovieService.createMovieService();
-
-        Call<Reviews> reviews = retrofitMovieInterface.getReviews(movieId, BuildConfig.OPEN_MOVIE_DB_API_KEY);
-        reviews.enqueue(new Callback<Reviews>() {
-            @Override
-            public void onResponse(Response<Reviews> response, Retrofit retrofit) {
-                if (response != null && response.body() != null) {
-                    addReviews(response.body().getReviewResults());
-                }
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                // Ignore for now
-                if (t.getMessage() != null) {
-                    Log.e(LOG_TAG, "Unable to parse review response: " + t.getMessage());
-                }
-            }
-        });
-    }
-
-    private void addReviews(List<ReviewResult> reviews) {
-        this.reviews.addAll(reviews);
+    public void swapCursor(Cursor cursor) {
+        this.cursor = cursor;
         notifyDataSetChanged();
     }
 
@@ -73,21 +40,29 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewItem
 
     @Override
     public void onBindViewHolder(final ReviewItemHolder holder, int position) {
-        final ReviewResult review = reviews.get(position);
-        holder.reviewAuthor.setText(review.getAuthor());
-        holder.reviewContent.setText(review.getContent());
+        cursor.moveToPosition(position);
+
+        final String author = cursor.getString(cursor.getColumnIndex(ReviewEntry.COLUMN_AUTHOR));
+        final String content = cursor.getString(cursor.getColumnIndex(ReviewEntry.COLUMN_CONTENT));
+        final String url = cursor.getString(cursor.getColumnIndex(ReviewEntry.COLUMN_URL));
+        holder.reviewAuthor.setText(author);
+        holder.reviewContent.setText(content);
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(review.getUrl())));
+                activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
             }
         });
     }
 
     @Override
     public int getItemCount() {
-        return reviews.size();
+        if (cursor != null) {
+            return cursor.getCount();
+        } else {
+            return 0;
+        }
     }
 
     public class ReviewItemHolder extends RecyclerView.ViewHolder {
