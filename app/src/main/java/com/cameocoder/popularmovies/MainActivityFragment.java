@@ -151,6 +151,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
             prefs.edit().putString(prefSortOrderKey, prefValueFavorite).apply();
         }
 
+        // TODO: delete database and refetch when selection changed?  Preserve favorites.
         getLoaderManager().restartLoader(MOVIE_LOADER, null, this);
         getActivity().invalidateOptionsMenu();
         return true;

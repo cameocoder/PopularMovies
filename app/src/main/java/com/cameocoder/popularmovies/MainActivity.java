@@ -2,6 +2,7 @@ package com.cameocoder.popularmovies;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -27,6 +28,17 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         MovieSyncAdapter.initializeSyncAdapter(this);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // Needed to reset app name after rotate if title is set to movie title
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setTitle(R.string.app_name);
+        }
     }
 
     @Override

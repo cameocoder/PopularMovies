@@ -31,7 +31,7 @@ import android.view.View;
 public class DividerItemDecoration extends RecyclerView.ItemDecoration {
 
     private static final int[] ATTRS = new int[]{
-            R.drawable.separator
+            android.R.attr.listDivider
     };
 
     public static final int HORIZONTAL_LIST = LinearLayoutManager.HORIZONTAL;

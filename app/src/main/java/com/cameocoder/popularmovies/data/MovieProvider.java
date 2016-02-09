@@ -34,7 +34,7 @@ public class MovieProvider extends ContentProvider {
     private static final SQLiteQueryBuilder movieByIdQueryBuilder;
     private static final SQLiteQueryBuilder favoriteByIdQueryBuilder;
     private static final SQLiteQueryBuilder trailerByMovieIdQueryBuilder;
-    private static final SQLiteQueryBuilder reviewByMovieIdQueryBuilder;
+    private static final SQLiteQueryBuilder reviewsByMovieIdQueryBuilder;
 
     static {
         movieByIdQueryBuilder = new SQLiteQueryBuilder();
@@ -50,8 +50,8 @@ public class MovieProvider extends ContentProvider {
 
         trailerByMovieIdQueryBuilder = new SQLiteQueryBuilder();
         trailerByMovieIdQueryBuilder.setTables(TrailerEntry.TABLE_NAME);
-        reviewByMovieIdQueryBuilder = new SQLiteQueryBuilder();
-        reviewByMovieIdQueryBuilder.setTables(ReviewEntry.TABLE_NAME);
+        reviewsByMovieIdQueryBuilder = new SQLiteQueryBuilder();
+        reviewsByMovieIdQueryBuilder.setTables(ReviewEntry.TABLE_NAME);
     }
 
     private static final String movieIdSelection = MovieEntry.TABLE_NAME + "."
@@ -62,6 +62,9 @@ public class MovieProvider extends ContentProvider {
 
     private static final String trailerByMovieIdSelection = TrailerEntry.TABLE_NAME + "."
             + TrailerEntry.COLUMN_MOVIE_ID + " = ? ";
+
+    private static final String reviewsByMovieIdSelection = ReviewEntry.TABLE_NAME + "."
+            + ReviewEntry.COLUMN_MOVIE_ID + " = ? ";
 
     static UriMatcher buildUriMatcher() {
 
@@ -76,7 +79,7 @@ public class MovieProvider extends ContentProvider {
         matcher.addURI(authority, MovieContract.PATH_TRAILER, TRAILERS);
         matcher.addURI(authority, MovieContract.PATH_TRAILER + "/#", TRAILERS_WITH_MOVIE_ID);
         matcher.addURI(authority, MovieContract.PATH_REVIEW, REVIEWS);
-        matcher.addURI(authority, MovieContract.PATH_REVIEW + "/#", REVIEWS);
+        matcher.addURI(authority, MovieContract.PATH_REVIEW + "/#", REVIEWS_WITH_MOVIE_ID);
         return matcher;
     }
 
@@ -129,9 +132,9 @@ public class MovieProvider extends ContentProvider {
 
     private Cursor getReviewByMovieID(Uri uri, String[] projection, String sortOrder) {
         String movie_id = ReviewEntry.getReviewIDFromUri(uri);
-        return trailerByMovieIdQueryBuilder.query(mOpenHelper.getReadableDatabase(),
+        return reviewsByMovieIdQueryBuilder.query(mOpenHelper.getReadableDatabase(),
                 projection,
-                trailerByMovieIdSelection,
+                reviewsByMovieIdSelection,
                 new String[] { movie_id },
                 null,
                 null,

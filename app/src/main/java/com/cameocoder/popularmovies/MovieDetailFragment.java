@@ -1,18 +1,17 @@
 package com.cameocoder.popularmovies;
 
-import android.app.ActionBar;
-import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
@@ -37,6 +36,9 @@ import com.squareup.picasso.Picasso;
 import butterknife.Bind;
 import butterknife.BindString;
 import butterknife.ButterKnife;
+
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
 
 /**
  * A fragment representing a single MovieItem detail screen.
@@ -91,9 +93,6 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
             ReviewEntry.COLUMN_URL
     };
 
-    @Nullable
-    @Bind(R.id.detail_title)
-    TextView detailTitle;
     @Bind(R.id.detail_poster)
     ImageView detailPoster;
     @Bind(R.id.detail_year)
@@ -107,8 +106,12 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
 
     @Bind(R.id.trailer_list)
     RecyclerView trailerList;
+    @Bind(R.id.trailer_layout)
+    View trailerLayout;
     @Bind(R.id.review_list)
     RecyclerView reviewList;
+    @Bind(R.id.review_layout)
+    View reviewLayout;
 
     @BindString(R.string.rating_format)
     String ratingFormat;
@@ -203,10 +206,12 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     }
 
     private void setTitle(String title) {
-        Activity activity = this.getActivity();
-        ActionBar actionbar = activity.getActionBar();
-        if (actionbar != null) {
-            actionbar.setTitle(title);
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
+        if (activity != null) {
+            ActionBar actionBar = activity.getSupportActionBar();
+            if (actionBar != null) {
+                actionBar.setTitle(title);
+            }
         }
     }
 
@@ -305,10 +310,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
 
                     String title = data.getString(data.getColumnIndex(MovieEntry.COLUMN_TITLE));
                     setTitle(title);
-                    if (detailTitle != null) {
-                        detailTitle.setText(title);
 
-                    }
                     String releaseYear = getReleaseYear(data.getString(data.getColumnIndex(MovieEntry.COLUMN_RELEASE_DATE)));
                     detailYear.setText(releaseYear);
 
@@ -335,26 +337,24 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
             }
             case TRAILER_LOADER: {
                 if (data != null && data.moveToFirst()) {
-                    final int id = data.getInt(data.getColumnIndex(TrailerEntry.COLUMN_ID));
-                    final int movieId = data.getInt(data.getColumnIndex(TrailerEntry.COLUMN_MOVIE_ID));
-                    final String name = data.getString(data.getColumnIndex(TrailerEntry.COLUMN_NAME));
-                    final String key = data.getString(data.getColumnIndex(TrailerEntry.COLUMN_KEY));
-                    Log.d(LOG_TAG, "id = " + id);
+                    trailerLayout.setVisibility(VISIBLE);
+                    Log.d(LOG_TAG, data.getCount() + " trailers retrieved from database");
                     trailerAdapter.swapCursor(data);
+                } else {
+                    trailerLayout.setVisibility(GONE);
                 }
                 break;
             }
             case REVIEW_LOADER: {
                 if (data != null && data.moveToFirst()) {
-                    final int id = data.getInt(data.getColumnIndex(ReviewEntry.COLUMN_ID));
-                    final int movieId = data.getInt(data.getColumnIndex(ReviewEntry.COLUMN_MOVIE_ID));
-                    final String author = data.getString(data.getColumnIndex(ReviewEntry.COLUMN_AUTHOR));
-                    Log.d(LOG_TAG, "id = " + id);
+                    reviewLayout.setVisibility(VISIBLE);
+                    Log.d(LOG_TAG, data.getCount() + " reviews retrieved from database");
                     reviewAdapter.swapCursor(data);
+                } else {
+                    reviewLayout.setVisibility(GONE);
                 }
                 break;
             }
-
         }
     }
 

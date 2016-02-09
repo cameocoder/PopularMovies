@@ -44,6 +44,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
 
     private static final String ARG_SYNC_TYPE = "syncType";
     private static final String ARG_MOVIE_ID = "movieId";
+    private static final String ARG_PAGE = "page";
 
     private static final int MOVIES = 0;
     private static final int TRAILERS = 1;
@@ -62,15 +63,15 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
         final int syncType = extras.getInt(ARG_SYNC_TYPE, MOVIES);
+        final int movieId = extras.getInt(ARG_MOVIE_ID);
+        final int page = extras.getInt(ARG_PAGE, 1);
         if (syncType == MOVIES) {
-            fetchMovies(getContext());
+            fetchMovies(getContext(), page);
         } else if (syncType == TRAILERS) {
-            final int movieId = extras.getInt(ARG_MOVIE_ID);
             if (movieId != 0) {
                 fetchTrailers(movieId);
             }
         } else if (syncType == REVIEWS) {
-            final int movieId = extras.getInt(ARG_MOVIE_ID);
             if (movieId != 0) {
                 fetchReviews(movieId);
             }
@@ -78,12 +79,12 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
 
     }
 
-    public void fetchMovies(Context context) {
+    public void fetchMovies(Context context, int page) {
         RetrofitMovieInterface retrofitMovieInterface = RetrofitMovieService.createMovieService();
 
         String sortOrder = getSortOrder(context);
 
-        Call<Movies> movies = retrofitMovieInterface.discoverMovies(sortOrder, BuildConfig.OPEN_MOVIE_DB_API_KEY);
+        Call<Movies> movies = retrofitMovieInterface.discoverMovies(sortOrder, page, BuildConfig.OPEN_MOVIE_DB_API_KEY);
         movies.enqueue(new Callback<Movies>() {
             @Override
             public void onResponse(Response<Movies> response, Retrofit retrofit) {
