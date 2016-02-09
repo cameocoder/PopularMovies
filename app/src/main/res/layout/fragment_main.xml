@@ -5,13 +5,14 @@
     tools:context="com.cameocoder.popularmovies.MainActivityFragment"
     tools:showIn="@layout/activity_main">
 
-    <TextView android:layout_width="match_parent"
+    <TextView
         android:id="@+id/movies_grid_empty"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
-        android:textAppearance="?android:textAppearanceLarge"
         android:text="There are no items to display"
-        android:visibility="gone"/>
+        android:textAppearance="?android:textAppearanceLarge"
+        android:visibility="gone" />
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/movies_grid"
