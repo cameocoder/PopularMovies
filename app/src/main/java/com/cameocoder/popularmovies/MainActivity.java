@@ -1,12 +1,16 @@
 package com.cameocoder.popularmovies;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.cameocoder.popularmovies.settings.SettingsActivity;
 import com.cameocoder.popularmovies.sync.MovieSyncAdapter;
@@ -33,6 +37,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
+        if (!hasNetworkConnection()) {
+            Toast.makeText(this, "Unable to detect network.  Content will not load or will not be current.",
+                    Toast.LENGTH_LONG).show();
+        }
 
         // Needed to reset app name after rotate if title is set to movie title
         ActionBar actionBar = getSupportActionBar();
@@ -61,5 +70,14 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private boolean hasNetworkConnection() {
+        ConnectivityManager cm =
+                (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        return activeNetwork != null &&
+                activeNetwork.isConnectedOrConnecting();
     }
 }
