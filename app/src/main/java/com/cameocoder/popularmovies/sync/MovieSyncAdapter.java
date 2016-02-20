@@ -17,8 +17,8 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.cameocoder.popularmovies.BuildConfig;
-import com.cameocoder.popularmovies.RetrofitMovieInterface;
 import com.cameocoder.popularmovies.R;
+import com.cameocoder.popularmovies.RetrofitMovieInterface;
 import com.cameocoder.popularmovies.RetrofitMovieService;
 import com.cameocoder.popularmovies.data.MovieContract;
 import com.cameocoder.popularmovies.data.MovieContract.ReviewEntry;
@@ -33,11 +33,9 @@ import com.cameocoder.popularmovies.model.Videos;
 import java.util.ArrayList;
 import java.util.List;
 
-import retrofit.Call;
-import retrofit.Callback;
-import retrofit.Response;
-import retrofit.Retrofit;
-
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     public final String LOG_TAG = MovieSyncAdapter.class.getSimpleName();
@@ -87,14 +85,14 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         Call<Movies> movies = retrofitMovieInterface.discoverMovies(sortOrder, page, BuildConfig.OPEN_MOVIE_DB_API_KEY);
         movies.enqueue(new Callback<Movies>() {
             @Override
-            public void onResponse(Response<Movies> response, Retrofit retrofit) {
+            public void onResponse(Call<Movies> call, Response<Movies> response) {
                 if (response != null && response.body() != null) {
                     addMovies(response.body().getMovies());
                 }
             }
 
             @Override
-            public void onFailure(Throwable t) {
+            public void onFailure(Call<Movies> call, Throwable t) {
                 // Ignore for now
                 if (t.getMessage() != null) {
                     Log.e(LOG_TAG, "Unable to parse response: " + t.getMessage());
@@ -132,18 +130,19 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         Call<Videos> videos = retrofitMovieInterface.getVideos(movieId, BuildConfig.OPEN_MOVIE_DB_API_KEY);
         videos.enqueue(new Callback<Videos>() {
             @Override
-            public void onResponse(Response<Videos> response, Retrofit retrofit) {
+            public void onResponse(Call<Videos> call, Response<Videos> response) {
                 if (response != null && response.body() != null) {
                     addVideos(movieId, response.body().getResults());
                 }
             }
 
             @Override
-            public void onFailure(Throwable t) {
+            public void onFailure(Call<Videos> call, Throwable t) {
                 // Ignore for now
                 if (t.getMessage() != null) {
                     Log.e(LOG_TAG, "Unable to parse video response: " + t.getMessage());
                 }
+
             }
         });
     }
@@ -177,14 +176,14 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         Call<Reviews> reviews = retrofitMovieInterface.getReviews(movieId, BuildConfig.OPEN_MOVIE_DB_API_KEY);
         reviews.enqueue(new Callback<Reviews>() {
             @Override
-            public void onResponse(Response<Reviews> response, Retrofit retrofit) {
+            public void onResponse(Call<Reviews> call, Response<Reviews> response) {
                 if (response != null && response.body() != null) {
                     addReviews(movieId, response.body().getReviewResults());
                 }
             }
 
             @Override
-            public void onFailure(Throwable t) {
+            public void onFailure(Call<Reviews> call, Throwable t) {
                 // Ignore for now
                 if (t.getMessage() != null) {
                     Log.e(LOG_TAG, "Unable to parse review response: " + t.getMessage());

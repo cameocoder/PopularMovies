@@ -1,7 +1,8 @@
 package com.cameocoder.popularmovies;
 
-import retrofit.GsonConverterFactory;
-import retrofit.Retrofit;
+
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RetrofitMovieService {
     private static final String API_URL = "http://api.themoviedb.org";
